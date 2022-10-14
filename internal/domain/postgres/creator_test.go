@@ -572,6 +572,84 @@ func testCreatorToManySubs(t *testing.T) {
 	}
 }
 
+func testCreatorToManySubHistories(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Creator
+	var b, c SubHistory
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Creator struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, subHistoryDBTypes, false, subHistoryColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, subHistoryDBTypes, false, subHistoryColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.CreatorID = a.CreatorID
+	c.CreatorID = a.CreatorID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.SubHistories().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.CreatorID == b.CreatorID {
+			bFound = true
+		}
+		if v.CreatorID == c.CreatorID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := CreatorSlice{&a}
+	if err = a.L.LoadSubHistories(ctx, tx, false, (*[]*Creator)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.SubHistories); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.SubHistories = nil
+	if err = a.L.LoadSubHistories(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.SubHistories); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
 func testCreatorToManyAddOpSubs(t *testing.T) {
 	var err error
 
@@ -639,6 +717,81 @@ func testCreatorToManyAddOpSubs(t *testing.T) {
 		}
 
 		count, err := a.Subs().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testCreatorToManyAddOpSubHistories(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Creator
+	var b, c, d, e SubHistory
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*SubHistory{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, subHistoryDBTypes, false, strmangle.SetComplement(subHistoryPrimaryKeyColumns, subHistoryColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*SubHistory{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddSubHistories(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.CreatorID != first.CreatorID {
+			t.Error("foreign key was wrong value", a.CreatorID, first.CreatorID)
+		}
+		if a.CreatorID != second.CreatorID {
+			t.Error("foreign key was wrong value", a.CreatorID, second.CreatorID)
+		}
+
+		if first.R.Creator != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.Creator != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.SubHistories[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.SubHistories[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.SubHistories().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}

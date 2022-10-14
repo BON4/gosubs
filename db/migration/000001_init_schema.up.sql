@@ -42,3 +42,12 @@ CREATE TABLE Sub_History (
 ALTER TABLE Sub_History
       ADD COLUMN sub_hist_id SERIAL PRIMARY KEY;
 
+ALTER TABLE Sub_History 
+ADD CONSTRAINT user_id_fk 
+FOREIGN KEY (user_id) REFERENCES TgUser(user_id) 
+ON DELETE SET NULL;
+
+ALTER TABLE Sub_History 
+ADD CONSTRAINT creator_id_fk 
+FOREIGN KEY (creator_id) REFERENCES Creator(creator_id) 
+ON DELETE SET NULL;

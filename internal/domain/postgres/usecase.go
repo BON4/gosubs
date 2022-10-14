@@ -36,6 +36,10 @@ type FindSubRequest struct {
 		Eq int64 `json:"eq"`
 	} `json:"creator_id,omitempty"`
 
+	TgUserID *struct {
+		Eq int64 `json:"eq"`
+	} `json:"tguser_id,omitempty"`
+
 	PageSettings *struct {
 		PageSize   uint `json:"page_size"`
 		PageNumber uint `json:"page_number"`
@@ -63,7 +67,32 @@ type FindUserRequest struct {
 	} `json:"page_settings"`
 }
 
+type FindCreatorRequest struct {
+	// Username *struct {
+	// 	Like string `json:"LIKE"`
+	// 	Eq   string `json:"EQ"`
+	// } `json:"username"`
+	// Email *struct {
+	// 	Like string `json:"LIKE"`
+	// 	Eq   string `json:"EQ"`
+	// } `json:"email"`
+	// Role *struct{
+	// 	Eq   string `json:"EQ"`
+	// } `json:"role"`
+	// ID *struct {
+	// 	Eq int `json:"EQ"`
+	// } `json:"id"`
+	PageSettings *struct {
+		PageSize   uint `json:"page_size"`
+		PageNumber uint `json:"page_number"`
+	} `json:"page_settings"`
+}
+
 type TgUserUsecase interface {
+	GetByID(ctx context.Context, id int64) (*Tguser, error)
+
+	GetByTelegramID(ctx context.Context, id int64) (*Tguser, error)
+
 	//Create - will create new user.
 	Create(ctx context.Context, tguser *Tguser) error
 
@@ -90,5 +119,16 @@ type SubscriptionUsecase interface {
 }
 
 type CreatorUsecase interface {
+	GetByID(ctx context.Context, id int64) (*Creator, error)
+
+	GetByTelegramID(ctx context.Context, id int64) (*Creator, error)
+
 	Create(ctx context.Context, creator *Creator) error
+
+	// Delete - will delete creator. Subscriptions will be deleted also.
+	Delete(ctx context.Context, id int64) error
+
+	Update(ctx context.Context, tguser *Creator) error
+
+	List(ctx context.Context, cond FindCreatorRequest) ([]*Creator, error)
 }

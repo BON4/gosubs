@@ -494,6 +494,223 @@ func testSubHistoriesInsertWhitelist(t *testing.T) {
 	}
 }
 
+func testSubHistoryToOneCreatorUsingCreator(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var local SubHistory
+	var foreign Creator
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, subHistoryDBTypes, false, subHistoryColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize SubHistory struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, creatorDBTypes, false, creatorColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Creator struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	local.CreatorID = foreign.CreatorID
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.Creator().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.CreatorID != foreign.CreatorID {
+		t.Errorf("want: %v, got %v", foreign.CreatorID, check.CreatorID)
+	}
+
+	slice := SubHistorySlice{&local}
+	if err = local.L.LoadCreator(ctx, tx, false, (*[]*SubHistory)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Creator == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.Creator = nil
+	if err = local.L.LoadCreator(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Creator == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testSubHistoryToOneTguserUsingUser(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var local SubHistory
+	var foreign Tguser
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, subHistoryDBTypes, false, subHistoryColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize SubHistory struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, tguserDBTypes, false, tguserColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Tguser struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	local.UserID = foreign.UserID
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.User().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.UserID != foreign.UserID {
+		t.Errorf("want: %v, got %v", foreign.UserID, check.UserID)
+	}
+
+	slice := SubHistorySlice{&local}
+	if err = local.L.LoadUser(ctx, tx, false, (*[]*SubHistory)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.User = nil
+	if err = local.L.LoadUser(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testSubHistoryToOneSetOpCreatorUsingCreator(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a SubHistory
+	var b, c Creator
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, subHistoryDBTypes, false, strmangle.SetComplement(subHistoryPrimaryKeyColumns, subHistoryColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Creator{&b, &c} {
+		err = a.SetCreator(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.Creator != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.SubHistories[0] != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if a.CreatorID != x.CreatorID {
+			t.Error("foreign key was wrong value", a.CreatorID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.CreatorID))
+		reflect.Indirect(reflect.ValueOf(&a.CreatorID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.CreatorID != x.CreatorID {
+			t.Error("foreign key was wrong value", a.CreatorID, x.CreatorID)
+		}
+	}
+}
+func testSubHistoryToOneSetOpTguserUsingUser(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a SubHistory
+	var b, c Tguser
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, subHistoryDBTypes, false, strmangle.SetComplement(subHistoryPrimaryKeyColumns, subHistoryColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, tguserDBTypes, false, strmangle.SetComplement(tguserPrimaryKeyColumns, tguserColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, tguserDBTypes, false, strmangle.SetComplement(tguserPrimaryKeyColumns, tguserColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Tguser{&b, &c} {
+		err = a.SetUser(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.User != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.UserSubHistories[0] != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if a.UserID != x.UserID {
+			t.Error("foreign key was wrong value", a.UserID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.UserID))
+		reflect.Indirect(reflect.ValueOf(&a.UserID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.UserID != x.UserID {
+			t.Error("foreign key was wrong value", a.UserID, x.UserID)
+		}
+	}
+}
+
 func testSubHistoriesReload(t *testing.T) {
 	t.Parallel()
 

@@ -81,8 +81,13 @@ func (s *subscriptionUsecase) List(ctx context.Context, cond models.FindSubReque
 		if cond.Price.Eq != nil {
 			conds = append(conds, qm.Where("price=?", *cond.Price.Eq))
 		} else if cond.Price.Range != nil {
-			conds = append(conds, qm.Where("price>?", *cond.Price.Range.From))
-			conds = append(conds, qm.Where("price<?", *cond.Price.Range.To))
+			if cond.Price.Range.From != nil {
+				conds = append(conds, qm.Where("price>?", *cond.Price.Range.From))
+			}
+
+			if cond.Price.Range.To != nil {
+				conds = append(conds, qm.Where("price<?", *cond.Price.Range.To))
+			}
 		}
 	}
 
@@ -90,8 +95,12 @@ func (s *subscriptionUsecase) List(ctx context.Context, cond models.FindSubReque
 		conds = append(conds, qm.Where("status=?", cond.Status.Eq))
 	}
 
+	if cond.TgUserID != nil {
+		conds = append(conds, qm.Where("user_id=?", cond.TgUserID.Eq))
+	}
+
 	if cond.CreatorID != nil {
-		conds = append(conds, qm.Where("status=?", cond.CreatorID.Eq))
+		conds = append(conds, qm.Where("creator_id=?", cond.CreatorID.Eq))
 	}
 
 	conds = append(conds, qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize)))

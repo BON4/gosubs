@@ -1,5 +1,5 @@
 output   = "./internal/domain/postgres"
-wipe     = true
+#wipe     = true
 pkgname  = "models"
 add-enum-types = true
 add-global-variants = true

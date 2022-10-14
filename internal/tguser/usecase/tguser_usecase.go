@@ -20,6 +20,29 @@ func NewTgUserUsecase(db *sql.DB) models.TgUserUsecase {
 	}
 }
 
+func (u *tgUserUsecase) GetByID(ctx context.Context, id int64) (*models.Tguser, error) {
+	user, err := models.FindTguser(ctx, u.db, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user does not exist")
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+func (u *tgUserUsecase) GetByTelegramID(ctx context.Context, id int64) (*models.Tguser, error) {
+	user := &models.Tguser{}
+	if err := models.Tgusers(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, u.db, user); err != nil {
+		if err != nil {
+			return nil, errors.New("user does not exist")
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
 // Create - will create new user.
 func (u *tgUserUsecase) Create(ctx context.Context, tguser *models.Tguser) error {
 	// IsExist. Check if user is already exist.
@@ -48,7 +71,6 @@ func (u *tgUserUsecase) Delete(ctx context.Context, id int64) error {
 	}
 
 	//Delete user subscription
-	//TODO Save subscription in heistory before Delete
 	if _, err := models.Subs(qm.Where("user_id=?", id)).DeleteAll(ctx, tx); err != nil {
 		//TODO Rollback can cause error
 		tx.Rollback()

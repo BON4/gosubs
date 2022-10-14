@@ -117,6 +117,8 @@ func TestInsert(t *testing.T) {
 func TestToOne(t *testing.T) {
 	t.Run("SubToCreatorUsingCreator", testSubToOneCreatorUsingCreator)
 	t.Run("SubToTguserUsingUser", testSubToOneTguserUsingUser)
+	t.Run("SubHistoryToCreatorUsingCreator", testSubHistoryToOneCreatorUsingCreator)
+	t.Run("SubHistoryToTguserUsingUser", testSubHistoryToOneTguserUsingUser)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -127,7 +129,9 @@ func TestOneToOne(t *testing.T) {}
 // or deadlocks can occur.
 func TestToMany(t *testing.T) {
 	t.Run("CreatorToSubs", testCreatorToManySubs)
+	t.Run("CreatorToSubHistories", testCreatorToManySubHistories)
 	t.Run("TguserToUserSubs", testTguserToManyUserSubs)
+	t.Run("TguserToUserSubHistories", testTguserToManyUserSubHistories)
 }
 
 // TestToOneSet tests cannot be run in parallel
@@ -135,6 +139,8 @@ func TestToMany(t *testing.T) {
 func TestToOneSet(t *testing.T) {
 	t.Run("SubToCreatorUsingSubs", testSubToOneSetOpCreatorUsingCreator)
 	t.Run("SubToTguserUsingUserSubs", testSubToOneSetOpTguserUsingUser)
+	t.Run("SubHistoryToCreatorUsingSubHistories", testSubHistoryToOneSetOpCreatorUsingCreator)
+	t.Run("SubHistoryToTguserUsingUserSubHistories", testSubHistoryToOneSetOpTguserUsingUser)
 }
 
 // TestToOneRemove tests cannot be run in parallel
@@ -153,7 +159,9 @@ func TestOneToOneRemove(t *testing.T) {}
 // or deadlocks can occur.
 func TestToManyAdd(t *testing.T) {
 	t.Run("CreatorToSubs", testCreatorToManyAddOpSubs)
+	t.Run("CreatorToSubHistories", testCreatorToManyAddOpSubHistories)
 	t.Run("TguserToUserSubs", testTguserToManyAddOpUserSubs)
+	t.Run("TguserToUserSubHistories", testTguserToManyAddOpUserSubHistories)
 }
 
 // TestToManySet tests cannot be run in parallel

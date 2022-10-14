@@ -195,14 +195,17 @@ var CreatorWhere = struct {
 
 // CreatorRels is where relationship names are stored.
 var CreatorRels = struct {
-	Subs string
+	Subs         string
+	SubHistories string
 }{
-	Subs: "Subs",
+	Subs:         "Subs",
+	SubHistories: "SubHistories",
 }
 
 // creatorR is where relationships are stored.
 type creatorR struct {
-	Subs SubSlice `boil:"Subs" json:"Subs" toml:"Subs" yaml:"Subs"`
+	Subs         SubSlice        `boil:"Subs" json:"Subs" toml:"Subs" yaml:"Subs"`
+	SubHistories SubHistorySlice `boil:"SubHistories" json:"SubHistories" toml:"SubHistories" yaml:"SubHistories"`
 }
 
 // NewStruct creates a new relationship struct
@@ -215,6 +218,13 @@ func (r *creatorR) GetSubs() SubSlice {
 		return nil
 	}
 	return r.Subs
+}
+
+func (r *creatorR) GetSubHistories() SubHistorySlice {
+	if r == nil {
+		return nil
+	}
+	return r.SubHistories
 }
 
 // creatorL is where Load methods for each relationship are stored.
@@ -540,6 +550,20 @@ func (o *Creator) Subs(mods ...qm.QueryMod) subQuery {
 	return Subs(queryMods...)
 }
 
+// SubHistories retrieves all the sub_history's SubHistories with an executor.
+func (o *Creator) SubHistories(mods ...qm.QueryMod) subHistoryQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"sub_history\".\"creator_id\"=?", o.CreatorID),
+	)
+
+	return SubHistories(queryMods...)
+}
+
 // LoadSubs allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (creatorL) LoadSubs(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCreator interface{}, mods queries.Applicator) error {
@@ -654,6 +678,120 @@ func (creatorL) LoadSubs(ctx context.Context, e boil.ContextExecutor, singular b
 	return nil
 }
 
+// LoadSubHistories allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (creatorL) LoadSubHistories(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCreator interface{}, mods queries.Applicator) error {
+	var slice []*Creator
+	var object *Creator
+
+	if singular {
+		var ok bool
+		object, ok = maybeCreator.(*Creator)
+		if !ok {
+			object = new(Creator)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCreator)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCreator))
+			}
+		}
+	} else {
+		s, ok := maybeCreator.(*[]*Creator)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCreator)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCreator))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &creatorR{}
+		}
+		args = append(args, object.CreatorID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &creatorR{}
+			}
+
+			for _, a := range args {
+				if a == obj.CreatorID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.CreatorID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`sub_history`),
+		qm.WhereIn(`sub_history.creator_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load sub_history")
+	}
+
+	var resultSlice []*SubHistory
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice sub_history")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on sub_history")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for sub_history")
+	}
+
+	if len(subHistoryAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.SubHistories = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &subHistoryR{}
+			}
+			foreign.R.Creator = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.CreatorID == foreign.CreatorID {
+				local.R.SubHistories = append(local.R.SubHistories, foreign)
+				if foreign.R == nil {
+					foreign.R = &subHistoryR{}
+				}
+				foreign.R.Creator = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // AddSubsG adds the given related objects to the existing relationships
 // of the creator, optionally inserting them as new records.
 // Appends related to o.R.Subs.
@@ -707,6 +845,68 @@ func (o *Creator) AddSubs(ctx context.Context, exec boil.ContextExecutor, insert
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &subR{
+				Creator: o,
+			}
+		} else {
+			rel.R.Creator = o
+		}
+	}
+	return nil
+}
+
+// AddSubHistoriesG adds the given related objects to the existing relationships
+// of the creator, optionally inserting them as new records.
+// Appends related to o.R.SubHistories.
+// Sets related.R.Creator appropriately.
+// Uses the global database handle.
+func (o *Creator) AddSubHistoriesG(ctx context.Context, insert bool, related ...*SubHistory) error {
+	return o.AddSubHistories(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// AddSubHistories adds the given related objects to the existing relationships
+// of the creator, optionally inserting them as new records.
+// Appends related to o.R.SubHistories.
+// Sets related.R.Creator appropriately.
+func (o *Creator) AddSubHistories(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*SubHistory) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.CreatorID = o.CreatorID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"sub_history\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"creator_id"}),
+				strmangle.WhereClause("\"", "\"", 2, subHistoryPrimaryKeyColumns),
+			)
+			values := []interface{}{o.CreatorID, rel.SubHistID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.CreatorID = o.CreatorID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &creatorR{
+			SubHistories: related,
+		}
+	} else {
+		o.R.SubHistories = append(o.R.SubHistories, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &subHistoryR{
 				Creator: o,
 			}
 		} else {
