@@ -24,7 +24,7 @@ CREATE TABLE Sub (
   	activated_at timestamptz NOT NULL DEFAULT (now()),
   	expires_at timestamptz NOT NULL DEFAULT (now()),
   	status sub_status NOT NULL,
-  	price money default 0.0,
+  	price integer default 0.0,
 	PRIMARY KEY (user_id, creator_id)
 );
 

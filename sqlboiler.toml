@@ -1,4 +1,4 @@
-output   = "./internal/models"
+output   = "./internal/domain/postgres"
 wipe     = true
 pkgname  = "models"
 add-enum-types = true

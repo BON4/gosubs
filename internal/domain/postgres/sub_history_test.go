@@ -568,7 +568,7 @@ func testSubHistoriesSelect(t *testing.T) {
 }
 
 var (
-	subHistoryDBTypes = map[string]string{`UserID`: `bigint`, `CreatorID`: `bigint`, `ActivatedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `enum.sub_status('expired','active','cancelled')`, `Price`: `money`, `SubHistID`: `integer`}
+	subHistoryDBTypes = map[string]string{`UserID`: `bigint`, `CreatorID`: `bigint`, `ActivatedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `enum.sub_status('expired','active','cancelled')`, `Price`: `integer`, `SubHistID`: `integer`}
 	_                 = bytes.MinRead
 )
 

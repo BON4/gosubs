@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BON4/gosubs/internal/models"
+	models "github.com/BON4/gosubs/internal/domain/postgres"
+	tguser_usecase "github.com/BON4/gosubs/internal/tguser/usecase"
 	_ "github.com/lib/pq"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -17,6 +18,7 @@ func connectDB() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
 
@@ -35,6 +37,35 @@ func deleteAll() {
 }
 
 func main() {
+	db, err := connectDB()
+	if err != nil {
+		panic(err)
+	}
+
+	boil.SetDB(db)
+
+	deleteAll()
+	uc := tguser_usecase.NewTgUserUsecase(db)
+
+	user1 := &models.Tguser{
+		TelegramID: 12345,
+		Username:   "test1_username",
+		Status:     models.UserStatusCreator,
+	}
+
+	err = uc.Create(context.TODO(), user1)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(user1)
+
+	if err := uc.Delete(context.TODO(), user1.UserID); err != nil {
+		panic(err)
+	}
+}
+
+func main1() {
 	// Open handle to database like normal
 	db, err := connectDB()
 	if err != nil {
@@ -49,10 +80,6 @@ func main() {
 		TelegramID: 12345,
 		Username:   "test1_username",
 		Status:     models.UserStatusCreator,
-	}
-
-	if err := user1.InsertG(context.TODO(), boil.Infer()); err != nil {
-		panic(err)
 	}
 
 	user2 := models.Tguser{

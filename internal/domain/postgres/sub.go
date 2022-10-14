@@ -24,12 +24,12 @@ import (
 
 // Sub is an object representing the database table.
 type Sub struct {
-	UserID      int64       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	CreatorID   int64       `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
-	ActivatedAt time.Time   `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
-	ExpiresAt   time.Time   `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
-	Status      SubStatus   `boil:"status" json:"status" toml:"status" yaml:"status"`
-	Price       null.String `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
+	UserID      int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	CreatorID   int64     `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
+	ActivatedAt time.Time `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
+	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
+	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
+	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
 
 	R *subR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L subL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -125,20 +125,58 @@ func (w whereHelperSubStatus) NIN(slice []SubStatus) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var SubWhere = struct {
 	UserID      whereHelperint64
 	CreatorID   whereHelperint64
 	ActivatedAt whereHelpertime_Time
 	ExpiresAt   whereHelpertime_Time
 	Status      whereHelperSubStatus
-	Price       whereHelpernull_String
+	Price       whereHelpernull_Int
 }{
 	UserID:      whereHelperint64{field: "\"sub\".\"user_id\""},
 	CreatorID:   whereHelperint64{field: "\"sub\".\"creator_id\""},
 	ActivatedAt: whereHelpertime_Time{field: "\"sub\".\"activated_at\""},
 	ExpiresAt:   whereHelpertime_Time{field: "\"sub\".\"expires_at\""},
 	Status:      whereHelperSubStatus{field: "\"sub\".\"status\""},
-	Price:       whereHelpernull_String{field: "\"sub\".\"price\""},
+	Price:       whereHelpernull_Int{field: "\"sub\".\"price\""},
 }
 
 // SubRels is where relationship names are stored.

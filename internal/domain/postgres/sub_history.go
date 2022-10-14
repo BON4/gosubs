@@ -24,13 +24,13 @@ import (
 
 // SubHistory is an object representing the database table.
 type SubHistory struct {
-	UserID      int64       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	CreatorID   int64       `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
-	ActivatedAt time.Time   `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
-	ExpiresAt   time.Time   `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
-	Status      SubStatus   `boil:"status" json:"status" toml:"status" yaml:"status"`
-	Price       null.String `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
-	SubHistID   int         `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id"`
+	UserID      int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	CreatorID   int64     `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
+	ActivatedAt time.Time `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
+	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
+	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
+	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
+	SubHistID   int       `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id"`
 
 	R *subHistoryR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L subHistoryL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -103,7 +103,7 @@ var SubHistoryWhere = struct {
 	ActivatedAt whereHelpertime_Time
 	ExpiresAt   whereHelpertime_Time
 	Status      whereHelperSubStatus
-	Price       whereHelpernull_String
+	Price       whereHelpernull_Int
 	SubHistID   whereHelperint
 }{
 	UserID:      whereHelperint64{field: "\"sub_history\".\"user_id\""},
@@ -111,7 +111,7 @@ var SubHistoryWhere = struct {
 	ActivatedAt: whereHelpertime_Time{field: "\"sub_history\".\"activated_at\""},
 	ExpiresAt:   whereHelpertime_Time{field: "\"sub_history\".\"expires_at\""},
 	Status:      whereHelperSubStatus{field: "\"sub_history\".\"status\""},
-	Price:       whereHelpernull_String{field: "\"sub_history\".\"price\""},
+	Price:       whereHelpernull_Int{field: "\"sub_history\".\"price\""},
 	SubHistID:   whereHelperint{field: "\"sub_history\".\"sub_hist_id\""},
 }
 
