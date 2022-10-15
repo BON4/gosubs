@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"errors"
 
-	models "github.com/BON4/gosubs/internal/domain/postgres"
+	domain "github.com/BON4/gosubs/internal/domain"
+	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -14,37 +16,37 @@ type creatorUsecase struct {
 	db *sql.DB
 }
 
-func NewCretorUsecase(db *sql.DB) models.CreatorUsecase {
+func NewCretorUsecase(db *sql.DB) domain.CreatorUsecase {
 	return &creatorUsecase{
 		db: db,
 	}
 }
 
-func (c *creatorUsecase) GetByID(ctx context.Context, id int64) (*models.Creator, error) {
-	creator, err := models.FindCreator(ctx, c.db, id)
+func (c *creatorUsecase) GetByID(ctx context.Context, id int64) (*domain.Creator, error) {
+	creator, err := boilmodels.FindCreator(ctx, c.db, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("creator does not exist")
 		}
 		return nil, err
 	}
-	return creator, nil
+	return domain.CreatorBoilToDomain(creator), nil
 }
 
-func (c *creatorUsecase) GetByTelegramID(ctx context.Context, id int64) (*models.Creator, error) {
-	creator := &models.Creator{}
-	if err := models.Creators(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, c.db, creator); err != nil {
+func (c *creatorUsecase) GetByTelegramID(ctx context.Context, id int64) (*domain.Creator, error) {
+	creator := &boilmodels.Creator{}
+	if err := boilmodels.Creators(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, c.db, creator); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("creator does not exist")
 		}
 		return nil, err
 	}
 
-	return creator, nil
+	return domain.CreatorBoilToDomain(creator), nil
 }
 
-func (c *creatorUsecase) Create(ctx context.Context, creator *models.Creator) error {
-	if _, err := models.Creators(qm.Where("telegram_id=?", creator.TelegramID)).One(ctx, c.db); err != nil {
+func (c *creatorUsecase) Create(ctx context.Context, creator *domain.Creator) error {
+	if _, err := boilmodels.Creators(qm.Where("telegram_id=?", creator.TelegramID)).One(ctx, c.db); err != nil {
 		if err != sql.ErrNoRows {
 			return err
 		}
@@ -53,10 +55,14 @@ func (c *creatorUsecase) Create(ctx context.Context, creator *models.Creator) er
 		return errors.New("already exist")
 	}
 
+	boilCreator := domain.CreatorDomainToBoil(creator)
+
 	// Insert
-	if err := creator.Insert(ctx, c.db, boil.Infer()); err != nil {
+	if err := boilCreator.Insert(ctx, c.db, boil.Infer()); err != nil {
 		return err
 	}
+
+	creator = domain.CreatorBoilToDomain(boilCreator)
 
 	return nil
 }
@@ -69,14 +75,14 @@ func (c *creatorUsecase) Delete(ctx context.Context, id int64) error {
 	}
 
 	//Delete user subscription
-	if _, err := models.Subs(qm.Where("creator_id=?", id)).DeleteAll(ctx, tx); err != nil {
+	if _, err := boilmodels.Subs(qm.Where("creator_id=?", id)).DeleteAll(ctx, tx); err != nil {
 		//TODO Rollback can cause error
 		tx.Rollback()
 		return err
 	}
 
 	// Delete tguser
-	if _, err := models.Tgusers(qm.Where("creator_id=?", id)).DeleteAll(ctx, tx); err != nil {
+	if _, err := boilmodels.Tgusers(qm.Where("creator_id=?", id)).DeleteAll(ctx, tx); err != nil {
 		//TODO Rollback can cause error
 		tx.Rollback()
 		return err
@@ -90,8 +96,8 @@ func (c *creatorUsecase) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (c *creatorUsecase) Update(ctx context.Context, creator *models.Creator) error {
-	foundCreator, err := models.FindCreator(ctx, c.db, creator.CreatorID)
+func (c *creatorUsecase) Update(ctx context.Context, creator *domain.Creator) error {
+	foundCreator, err := boilmodels.FindCreator(ctx, c.db, creator.CreatorID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("creator does not exist")
@@ -99,16 +105,32 @@ func (c *creatorUsecase) Update(ctx context.Context, creator *models.Creator) er
 		return err
 	}
 
-	foundCreator.TelegramID = creator.TelegramID
-	foundCreator.Username = creator.Username
-	foundCreator.Password = creator.Password
-	foundCreator.Email = creator.Email
-	foundCreator.ChanName = creator.ChanName
+	boilCreator := domain.CreatorDomainToBoil(creator)
+
+	foundCreator.TelegramID = boilCreator.TelegramID
+	foundCreator.Username = boilCreator.Username
+	foundCreator.Password = boilCreator.Password
+	foundCreator.Email = boilCreator.Email
+	foundCreator.ChanName = boilCreator.ChanName
 
 	_, err = foundCreator.Update(ctx, c.db, boil.Infer())
+
+	creator = domain.CreatorBoilToDomain(foundCreator)
+
 	return err
 }
 
-func (c *creatorUsecase) List(ctx context.Context, cond models.FindCreatorRequest) ([]*models.Creator, error) {
-	return models.Creators(qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize))).All(ctx, c.db)
+func (c *creatorUsecase) List(ctx context.Context, cond domain.FindCreatorRequest) ([]*domain.Creator, error) {
+	bcreators, err := boilmodels.Creators(qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize))).All(ctx, c.db)
+	if err != nil {
+		return make([]*domain.Creator, 0), err
+	}
+
+	domainCreators := make([]*domain.Creator, len(bcreators))
+
+	for i, creator := range bcreators {
+		domainCreators[i] = domain.CreatorBoilToDomain(creator)
+	}
+
+	return domainCreators, nil
 }

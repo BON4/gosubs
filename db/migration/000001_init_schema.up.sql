@@ -40,7 +40,7 @@ CREATE TABLE Sub_History (
 );
 
 ALTER TABLE Sub_History
-      ADD COLUMN sub_hist_id SERIAL PRIMARY KEY;
+      ADD COLUMN sub_hist_id BIGSERIAL PRIMARY KEY;
 
 ALTER TABLE Sub_History 
 ADD CONSTRAINT user_id_fk 

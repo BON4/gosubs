@@ -30,7 +30,7 @@ type SubHistory struct {
 	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
 	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
-	SubHistID   int       `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id"`
+	SubHistID   int64     `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id"`
 
 	R *subHistoryR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L subHistoryL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -74,29 +74,6 @@ var SubHistoryTableColumns = struct {
 
 // Generated where
 
-type whereHelperint struct{ field string }
-
-func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint) IN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperint) NIN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
 var SubHistoryWhere = struct {
 	UserID      whereHelperint64
 	CreatorID   whereHelperint64
@@ -104,7 +81,7 @@ var SubHistoryWhere = struct {
 	ExpiresAt   whereHelpertime_Time
 	Status      whereHelperSubStatus
 	Price       whereHelpernull_Int
-	SubHistID   whereHelperint
+	SubHistID   whereHelperint64
 }{
 	UserID:      whereHelperint64{field: "\"sub_history\".\"user_id\""},
 	CreatorID:   whereHelperint64{field: "\"sub_history\".\"creator_id\""},
@@ -112,7 +89,7 @@ var SubHistoryWhere = struct {
 	ExpiresAt:   whereHelpertime_Time{field: "\"sub_history\".\"expires_at\""},
 	Status:      whereHelperSubStatus{field: "\"sub_history\".\"status\""},
 	Price:       whereHelpernull_Int{field: "\"sub_history\".\"price\""},
-	SubHistID:   whereHelperint{field: "\"sub_history\".\"sub_hist_id\""},
+	SubHistID:   whereHelperint64{field: "\"sub_history\".\"sub_hist_id\""},
 }
 
 // SubHistoryRels is where relationship names are stored.
@@ -842,13 +819,13 @@ func SubHistories(mods ...qm.QueryMod) subHistoryQuery {
 }
 
 // FindSubHistoryG retrieves a single record by ID.
-func FindSubHistoryG(ctx context.Context, subHistID int, selectCols ...string) (*SubHistory, error) {
+func FindSubHistoryG(ctx context.Context, subHistID int64, selectCols ...string) (*SubHistory, error) {
 	return FindSubHistory(ctx, boil.GetContextDB(), subHistID, selectCols...)
 }
 
 // FindSubHistory retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindSubHistory(ctx context.Context, exec boil.ContextExecutor, subHistID int, selectCols ...string) (*SubHistory, error) {
+func FindSubHistory(ctx context.Context, exec boil.ContextExecutor, subHistID int64, selectCols ...string) (*SubHistory, error) {
 	subHistoryObj := &SubHistory{}
 
 	sel := "*"
@@ -1407,12 +1384,12 @@ func (o *SubHistorySlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 }
 
 // SubHistoryExistsG checks if the SubHistory row exists.
-func SubHistoryExistsG(ctx context.Context, subHistID int) (bool, error) {
+func SubHistoryExistsG(ctx context.Context, subHistID int64) (bool, error) {
 	return SubHistoryExists(ctx, boil.GetContextDB(), subHistID)
 }
 
 // SubHistoryExists checks if the SubHistory row exists.
-func SubHistoryExists(ctx context.Context, exec boil.ContextExecutor, subHistID int) (bool, error) {
+func SubHistoryExists(ctx context.Context, exec boil.ContextExecutor, subHistID int64) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"sub_history\" where \"sub_hist_id\"=$1 limit 1)"
 

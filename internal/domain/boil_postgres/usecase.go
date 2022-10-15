@@ -55,12 +55,6 @@ type FindUserRequest struct {
 	// 	Like string `json:"LIKE"`
 	// 	Eq   string `json:"EQ"`
 	// } `json:"email"`
-	// Role *struct{
-	// 	Eq   string `json:"EQ"`
-	// } `json:"role"`
-	// ID *struct {
-	// 	Eq int `json:"EQ"`
-	// } `json:"id"`
 	PageSettings *struct {
 		PageSize   uint `json:"page_size"`
 		PageNumber uint `json:"page_number"`
@@ -76,12 +70,6 @@ type FindCreatorRequest struct {
 	// 	Like string `json:"LIKE"`
 	// 	Eq   string `json:"EQ"`
 	// } `json:"email"`
-	// Role *struct{
-	// 	Eq   string `json:"EQ"`
-	// } `json:"role"`
-	// ID *struct {
-	// 	Eq int `json:"EQ"`
-	// } `json:"id"`
 	PageSettings *struct {
 		PageSize   uint `json:"page_size"`
 		PageNumber uint `json:"page_number"`
@@ -109,7 +97,7 @@ type SubscriptionUsecase interface {
 	Create(ctx context.Context, sub *Sub) error
 
 	// Save - saves subscription to history table.
-	Save(ctx context.Context, sub *Sub) error
+	Save(ctx context.Context, sub *Sub) (int64, error)
 
 	Update(ctx context.Context, sub *Sub) error
 
