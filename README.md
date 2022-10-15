@@ -1,6 +1,6 @@
-#Subscription benchmarks
+# Subscription benchmarks
 
-##Subscibtion List with filters (Create, Select)
+## Subscibtion List with filters (Create, Select)
 sqlc:
 BenchmarkSubList-4   	     405	   3395468 ns/op
 BenchmarkSubList-4   	     432	   2706136 ns/op
@@ -11,7 +11,7 @@ BenchmarkSubList-4           324           6197685 ns/op
 BenchmarkSubList-4   	     494	   2549310 ns/op
 BenchmarkSubList-4   	     438	   3022263 ns/op
 
-##Subscription Update (Create, Update)
+## Subscription Update (Create, Update)
 sqlc:
 BenchmarkUpdate-4   	     154	   6837069 ns/op
 BenchmarkUpdate-4   	     217	   6442926 ns/op
