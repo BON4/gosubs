@@ -29,7 +29,10 @@ func (u *tgUserUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Tgus
 		}
 		return nil, err
 	}
-	return domain.TguserBoilToDomain(user), nil
+
+	domainUser := &domain.Tguser{}
+	domain.TguserBoilToDomain(user, domainUser)
+	return domainUser, nil
 }
 
 func (u *tgUserUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*domain.Tguser, error) {
@@ -41,7 +44,9 @@ func (u *tgUserUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*dom
 		return nil, err
 	}
 
-	return domain.TguserBoilToDomain(user), nil
+	domainUser := &domain.Tguser{}
+	domain.TguserBoilToDomain(user, domainUser)
+	return domainUser, nil
 }
 
 // Create - will create new user.
@@ -56,14 +61,15 @@ func (u *tgUserUsecaseBoil) Create(ctx context.Context, tguser *domain.Tguser) e
 		return errors.New("already exist")
 	}
 
-	boilUser := domain.TguserDomainToBoil(tguser)
+	boilUser := &boilmodels.Tguser{}
+	domain.TguserDomainToBoil(tguser, boilUser)
 
 	// Insert
 	if err := boilUser.Insert(ctx, u.db, boil.Infer()); err != nil {
 		return err
 	}
 
-	tguser = domain.TguserBoilToDomain(boilUser)
+	domain.TguserBoilToDomain(boilUser, tguser)
 
 	return nil
 }
@@ -106,7 +112,8 @@ func (u *tgUserUsecaseBoil) Update(ctx context.Context, tguser *domain.Tguser) e
 		return err
 	}
 
-	boilUser := domain.TguserDomainToBoil(tguser)
+	boilUser := &boilmodels.Tguser{}
+	domain.TguserDomainToBoil(tguser, boilUser)
 
 	user.Username = boilUser.Username
 	user.TelegramID = boilUser.TelegramID
@@ -114,7 +121,7 @@ func (u *tgUserUsecaseBoil) Update(ctx context.Context, tguser *domain.Tguser) e
 
 	_, err = user.Update(ctx, u.db, boil.Infer())
 
-	tguser = domain.TguserBoilToDomain(user)
+	domain.TguserBoilToDomain(user, tguser)
 	return err
 }
 
@@ -127,7 +134,8 @@ func (u *tgUserUsecaseBoil) List(ctx context.Context, cond domain.FindUserReques
 	domainUsers := make([]*domain.Tguser, len(busers))
 
 	for i, user := range busers {
-		domainUsers[i] = domain.TguserBoilToDomain(user)
+		domainUsers[i] = &domain.Tguser{}
+		domain.TguserBoilToDomain(user, domainUsers[i])
 	}
 
 	return domainUsers, nil

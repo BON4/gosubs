@@ -1,6 +1,6 @@
 CREATE TYPE user_status AS ENUM('creator', 'administrator', 'member', 'restricted', 'left', 'kicked');
 
-CREATE TYPE sub_status AS ENUM('expired', 'active', 'cancelled');
+CREATE TYPE sub_status AS ENUM('expired', 'active', 'cancelled', 'inactive');
 
 CREATE TABLE TgUser (
 	user_id bigserial not null unique PRIMARY KEY,
@@ -23,7 +23,7 @@ CREATE TABLE Sub (
   	creator_id bigint not null,
   	activated_at timestamptz NOT NULL DEFAULT (now()),
   	expires_at timestamptz NOT NULL DEFAULT (now()),
-  	status sub_status NOT NULL,
+  	status sub_status NOT NULL default 'inactive',
   	price integer default 0.0,
 	PRIMARY KEY (user_id, creator_id)
 );

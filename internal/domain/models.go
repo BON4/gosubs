@@ -28,39 +28,39 @@ type Tguser struct {
 	Status     UserStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
 }
 
-func TguserDomainToBoil(user *Tguser) *boilmodels.Tguser {
-	return &boilmodels.Tguser{
-		UserID:     user.UserID,
-		TelegramID: user.TelegramID,
-		Username:   user.Username,
-		Status:     boilmodels.UserStatus(user.Status),
+func TguserDomainToBoil(user *Tguser, userout *boilmodels.Tguser) {
+	if userout != nil {
+		userout.UserID = user.UserID
+		userout.TelegramID = user.TelegramID
+		userout.Username = user.Username
+		userout.Status = boilmodels.UserStatus(user.Status)
 	}
 }
 
-func TguserDomainToSqlc(user *Tguser) *sqlcmodels.Tguser {
-	return &boilmodels.Tguser{
-		UserID:     user.UserID,
-		TelegramID: user.TelegramID,
-		Username:   user.Username,
-		Status:     boilmodels.UserStatus(user.Status),
+func TguserDomainToSqlc(user *Tguser, userout *sqlcmodels.Tguser) {
+	if userout != nil {
+		userout.UserID = user.UserID
+		userout.TelegramID = user.TelegramID
+		userout.Username = user.Username
+		userout.Status = sqlcmodels.UserStatus(user.Status)
 	}
 }
 
-func TguserBoilToDomain(user *boilmodels.Tguser) *Tguser {
-	return &Tguser{
-		UserID:     user.UserID,
-		TelegramID: user.TelegramID,
-		Username:   user.Username,
-		Status:     UserStatus(user.Status),
+func TguserBoilToDomain(user *boilmodels.Tguser, userout *Tguser) {
+	if userout != nil {
+		userout.UserID = user.UserID
+		userout.TelegramID = user.TelegramID
+		userout.Username = user.Username
+		userout.Status = UserStatus(user.Status)
 	}
 }
 
-func TguserSqlcToDomain(user *sqlcmodels.Tguser) *Tguser {
-	return &Tguser{
-		UserID:     user.UserID,
-		TelegramID: user.TelegramID,
-		Username:   user.Username,
-		Status:     UserStatus(user.Status),
+func TguserSqlcToDomain(user *sqlcmodels.Tguser, userout *Tguser) {
+	if userout != nil {
+		userout.UserID = user.UserID
+		userout.TelegramID = user.TelegramID
+		userout.Username = user.Username
+		userout.Status = UserStatus(user.Status)
 	}
 }
 
@@ -73,47 +73,54 @@ type Creator struct {
 	ChanName   null.String `boil:"chan_name" json:"chan_name,omitempty" toml:"chan_name" yaml:"chan_name,omitempty"`
 }
 
-func CreatorDomainToBoil(creator *Creator) *boilmodels.Creator {
-	return &boilmodels.Creator{
-		CreatorID:  creator.CreatorID,
-		TelegramID: creator.TelegramID,
-		Username:   creator.Username,
-		Password:   creator.Password,
-		Email:      creator.Email,
-		ChanName:   creator.ChanName,
+func CreatorDomainToBoil(creator *Creator, creatorout *boilmodels.Creator) {
+	if creatorout != nil {
+		creatorout.CreatorID = creator.CreatorID
+		creatorout.TelegramID = creator.TelegramID
+		creatorout.Username = creator.Username
+		creatorout.Password = creator.Password
+		creatorout.Email = creator.Email
+		creatorout.ChanName = creator.ChanName
 	}
 }
 
-func CreatorBoilToDomain(creator *boilmodels.Creator) *Creator {
-	return &Creator{
-		CreatorID:  creator.CreatorID,
-		TelegramID: creator.TelegramID,
-		Username:   creator.Username,
-		Password:   creator.Password,
-		Email:      creator.Email,
-		ChanName:   creator.ChanName,
+func CreatorBoilToDomain(creator *boilmodels.Creator, creatorout *Creator) {
+	if creatorout != nil {
+		creatorout.CreatorID = creator.CreatorID
+		creatorout.TelegramID = creator.TelegramID
+		creatorout.Username = creator.Username
+		creatorout.Password = creator.Password
+		creatorout.Email = creator.Email
+		creatorout.ChanName = creator.ChanName
 	}
 }
 
-func CreatorDomainToSqlc(creator *Creator) *sqlcmodels.Creator {
-	return &boilmodels.Creator{
-		CreatorID:  creator.CreatorID,
-		TelegramID: creator.TelegramID,
-		Username:   creator.Username,
-		Password:   creator.Password,
-		Email:      creator.Email,
-		ChanName:   creator.ChanName,
+func CreatorDomainToSqlc(creator *Creator, creatorout *sqlcmodels.Creator) {
+	if creatorout != nil {
+		creatorout.CreatorID = creator.CreatorID
+		creatorout.TelegramID = creator.TelegramID
+		creatorout.Username = creator.Username
+		creatorout.Password = creator.Password.Bytes
+		creatorout.Email = sql.NullString{
+			String: creator.Email.String,
+			Valid:  creator.Email.Valid,
+		}
+
+		creatorout.ChanName = sql.NullString{
+			String: creator.ChanName.String,
+			Valid:  creator.ChanName.Valid,
+		}
 	}
 }
 
-func CreatorSqlcToDomain(creator *sqlcmodels.Creator) *Creator {
-	return &Creator{
-		CreatorID:  creator.CreatorID,
-		TelegramID: creator.TelegramID,
-		Username:   creator.Username,
-		Password:   null.NewBytes(creator.Password, len(creator.Password) < 0),
-		Email:      null.NewString(creator.Email.String, creator.Email.Valid),
-		ChanName:   null.NewString(creator.ChanName.String, creator.ChanName.Valid),
+func CreatorSqlcToDomain(creator *sqlcmodels.Creator, creatorout *Creator) {
+	if creatorout != nil {
+		creatorout.CreatorID = creator.CreatorID
+		creatorout.TelegramID = creator.TelegramID
+		creatorout.Username = creator.Username
+		creatorout.Password = null.NewBytes(creator.Password, len(creator.Password) < 0)
+		creatorout.Email = null.NewString(creator.Email.String, creator.Email.Valid)
+		creatorout.ChanName = null.NewString(creator.ChanName.String, creator.ChanName.Valid)
 	}
 }
 
@@ -126,50 +133,50 @@ type Sub struct {
 	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
 }
 
-func SubDomainToBoil(sub *Sub) *boilmodels.Sub {
-	return &boilmodels.Sub{
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      boilmodels.SubStatus(sub.Status),
-		Price:       sub.Price,
+func SubDomainToBoil(sub *Sub, subout *boilmodels.Sub) {
+	if subout != nil {
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = boilmodels.SubStatus(sub.Status)
+		subout.Price = sub.Price
 	}
 }
 
-func SubBoilToDomain(sub *boilmodels.Sub) *Sub {
-	return &Sub{
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      SubStatus(sub.Status),
-		Price:       sub.Price,
+func SubBoilToDomain(sub *boilmodels.Sub, subout *Sub) {
+	if subout != nil {
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = SubStatus(sub.Status)
+		subout.Price = sub.Price
 	}
 }
 
-func SubDomainToSqlc(sub *Sub) *sqlcmodels.Sub {
-	return &sqlcmodels.Sub{
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      sqlcmodels.SubStatus(sub.Status),
-		Price: sql.NullInt32{
+func SubDomainToSqlc(sub *Sub, subout *sqlcmodels.Sub) {
+	if subout != nil {
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = sqlcmodels.SubStatus(sub.Status)
+		subout.Price = sql.NullInt32{
 			Int32: int32(sub.Price.Int),
 			Valid: sub.Price.Valid,
-		},
+		}
 	}
 }
 
-func SubSqlcToDomain(sub *sqlcmodels.Sub) *Sub {
-	return &Sub{
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      SubStatus(sub.Status),
-		Price:       null.NewInt(int(sub.Price.Int32), sub.Price.Valid),
+func SubSqlcToDomain(sub *sqlcmodels.Sub, subout *Sub) {
+	if subout != nil {
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = SubStatus(sub.Status)
+		subout.Price = null.NewInt(int(sub.Price.Int32), sub.Price.Valid)
 	}
 }
 
@@ -192,53 +199,53 @@ type SubHistory struct {
 	SubHistID   int64     `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id"`
 }
 
-func SubHistoryDomainToBoil(sub *SubHistory) *boilmodels.SubHistory {
-	return &boilmodels.SubHistory{
-		SubHistID:   sub.SubHistID,
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      boilmodels.SubStatus(sub.Status),
-		Price:       sub.Price,
+func SubHistoryDomainToBoil(sub *SubHistory, subout *boilmodels.SubHistory) {
+	if subout != nil {
+		subout.SubHistID = sub.SubHistID
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = boilmodels.SubStatus(sub.Status)
+		subout.Price = sub.Price
 	}
 }
 
-func SubHistoryBoilToDomain(sub *boilmodels.SubHistory) *SubHistory {
-	return &SubHistory{
-		SubHistID:   sub.SubHistID,
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      SubStatus(sub.Status),
-		Price:       sub.Price,
+func SubHistoryBoilToDomain(sub *boilmodels.SubHistory, subout *SubHistory) {
+	if subout != nil {
+		subout.SubHistID = sub.SubHistID
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = SubStatus(sub.Status)
+		subout.Price = sub.Price
 	}
 }
 
-func SubHistoryDomainToSqlc(sub *SubHistory) *sqlcmodels.SubHistory {
-	return &sqlcmodels.SubHistory{
-		SubHistID:   sub.SubHistID,
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      sqlcmodels.SubStatus(sub.Status),
-		Price: sql.NullInt32{
+func SubHistoryDomainToSqlc(sub *SubHistory, subout *sqlcmodels.SubHistory) {
+	if subout != nil {
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = sqlcmodels.SubStatus(sub.Status)
+		subout.Price = sql.NullInt32{
 			Int32: int32(sub.Price.Int),
 			Valid: sub.Price.Valid,
-		},
+		}
+		subout.SubHistID = sub.SubHistID
 	}
 }
 
-func SubHistorySqlcToDomain(sub *sqlcmodels.SubHistory) *SubHistory {
-	return &SubHistory{
-		SubHistID:   sub.SubHistID,
-		UserID:      sub.UserID,
-		CreatorID:   sub.CreatorID,
-		ActivatedAt: sub.ActivatedAt,
-		ExpiresAt:   sub.ExpiresAt,
-		Status:      SubStatus(sub.Status),
-		Price:       null.NewInt(int(sub.Price.Int32), sub.Price.Valid),
+func SubHistorySqlcToDomain(sub *sqlcmodels.SubHistory, subout *SubHistory) {
+	if subout != nil {
+		subout.SubHistID = sub.SubHistID
+		subout.UserID = sub.UserID
+		subout.CreatorID = sub.CreatorID
+		subout.ActivatedAt = sub.ActivatedAt
+		subout.ExpiresAt = sub.ExpiresAt
+		subout.Status = SubStatus(sub.Status)
+		subout.Price = null.NewInt(int(sub.Price.Int32), sub.Price.Valid)
 	}
 }

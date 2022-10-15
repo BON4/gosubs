@@ -28,7 +28,9 @@ func (c *creatorUsecaseSqlc) GetByID(ctx context.Context, id int64) (*domain.Cre
 		}
 		return nil, err
 	}
-	return domain.CreatorSqlcToDomain(creator), nil
+	domainCreator := &domain.Creator{}
+	domain.CreatorSqlcToDomain(creator, domainCreator)
+	return domainCreator, nil
 }
 
 func (c *creatorUsecaseSqlc) GetByTelegramID(ctx context.Context, id int64) (*domain.Creator, error) {
@@ -39,7 +41,9 @@ func (c *creatorUsecaseSqlc) GetByTelegramID(ctx context.Context, id int64) (*do
 		}
 		return nil, err
 	}
-	return domain.CreatorSqlcToDomain(creator), nil
+	domainCreator := &domain.Creator{}
+	domain.CreatorSqlcToDomain(creator, domainCreator)
+	return domainCreator, nil
 }
 
 func (c *creatorUsecaseSqlc) Create(ctx context.Context, creator *domain.Creator) error {
@@ -49,7 +53,8 @@ func (c *creatorUsecaseSqlc) Create(ctx context.Context, creator *domain.Creator
 		return errors.New("already exist")
 	}
 
-	sqlcCreator := domain.CreatorDomainToSqlc(creator)
+	sqlcCreator := &sqlcmodels.Creator{}
+	domain.CreatorDomainToSqlc(creator, sqlcCreator)
 
 	var err error
 	// Insert
@@ -65,7 +70,7 @@ func (c *creatorUsecaseSqlc) Create(ctx context.Context, creator *domain.Creator
 		return err
 	}
 
-	creator = domain.CreatorSqlcToDomain(sqlcCreator)
+	domain.CreatorSqlcToDomain(sqlcCreator, creator)
 
 	return nil
 }
@@ -85,8 +90,8 @@ func (c *creatorUsecaseSqlc) Update(ctx context.Context, creator *domain.Creator
 		}
 		return err
 	}
-
-	sqlcCreator := domain.CreatorDomainToSqlc(creator)
+	sqlcCreator := &sqlcmodels.Creator{}
+	domain.CreatorDomainToSqlc(creator, sqlcCreator)
 
 	sqlcCreator, err = c.db.UpdateCreator(ctx, sqlcmodels.UpdateCreatorParams{
 		TelegramID: sql.NullInt64{
@@ -103,8 +108,7 @@ func (c *creatorUsecaseSqlc) Update(ctx context.Context, creator *domain.Creator
 
 		CreatorID: sqlcCreator.CreatorID,
 	})
-
-	creator = domain.CreatorSqlcToDomain(sqlcCreator)
+	domain.CreatorSqlcToDomain(sqlcCreator, creator)
 	return err
 }
 
@@ -121,7 +125,8 @@ func (c *creatorUsecaseSqlc) List(ctx context.Context, cond domain.FindCreatorRe
 	domainCretors := make([]*domain.Creator, len(susers))
 
 	for i, user := range susers {
-		domainCretors[i] = domain.CreatorSqlcToDomain(user)
+		domainCretors[i] = &domain.Creator{}
+		domain.CreatorSqlcToDomain(user, domainCretors[i])
 	}
 
 	return domainCretors, nil

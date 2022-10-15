@@ -58,6 +58,7 @@ const (
 	SubStatusExpired   SubStatus = "expired"
 	SubStatusActive    SubStatus = "active"
 	SubStatusCancelled SubStatus = "cancelled"
+	SubStatusInactive  SubStatus = "inactive"
 )
 
 func AllSubStatus() []SubStatus {
@@ -65,12 +66,13 @@ func AllSubStatus() []SubStatus {
 		SubStatusExpired,
 		SubStatusActive,
 		SubStatusCancelled,
+		SubStatusInactive,
 	}
 }
 
 func (e SubStatus) IsValid() error {
 	switch e {
-	case SubStatusExpired, SubStatusActive, SubStatusCancelled:
+	case SubStatusExpired, SubStatusActive, SubStatusCancelled, SubStatusInactive:
 		return nil
 	default:
 		return errors.New("enum is not valid")

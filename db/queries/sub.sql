@@ -47,7 +47,7 @@ UPDATE sub
 SET
 	activated_at = COALESCE(sqlc.narg(activated_at), activated_at),
 	expires_at = COALESCE(sqlc.narg(expires_at), expires_at),
-	status = COALESCE(sqlc.narg(status), status),
+	status = @status,
 	price = COALESCE(sqlc.narg(price), price)
 WHERE
 	user_id = sqlc.arg(user_id) and creator_id = sqlc.arg(creator_id)
@@ -64,3 +64,7 @@ WHERE TRUE
 	AND (CASE WHEN @is_creator_id_eq::bool THEN creator_id = @creator_id_eq ELSE TRUE END)
 	AND (CASE WHEN @is_user_id_eq::bool THEN user_id = @user_id_eq ELSE TRUE END)
 OFFSET @page_number LIMIT @page_size;
+
+
+-- name: DeleteAll :exec
+TRUNCATE TABLE sub_history, sub, creator, tguser;

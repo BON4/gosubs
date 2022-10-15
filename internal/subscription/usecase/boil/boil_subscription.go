@@ -32,20 +32,23 @@ func (s *subscriptionUsecaseBoil) Create(ctx context.Context, sub *domain.Sub) e
 		return errors.New("subscription for this user is already exist")
 	}
 
-	boilSub := domain.SubDomainToBoil(sub)
+	boilSub := &boilmodels.Sub{}
+	domain.SubDomainToBoil(sub, boilSub)
 
 	if err := boilSub.Insert(ctx, s.db, boil.Infer()); err != nil {
 		return err
 	}
 
-	sub = domain.SubBoilToDomain(boilSub)
+	domain.SubBoilToDomain(boilSub, sub)
 
 	return nil
 }
 
 // Save - saves subscription to history table.
 func (s *subscriptionUsecaseBoil) Save(ctx context.Context, sub *domain.Sub) (int64, error) {
-	boilSub := domain.SubDomainToBoil(sub)
+	boilSub := &boilmodels.Sub{}
+
+	domain.SubDomainToBoil(sub, boilSub)
 
 	subhist := boilmodels.SubHistory{
 		UserID:      boilSub.UserID,
@@ -68,8 +71,9 @@ func (s *subscriptionUsecaseBoil) Update(ctx context.Context, sub *domain.Sub) e
 		}
 		return err
 	}
+	boilSub := &boilmodels.Sub{}
 
-	boilSub := domain.SubDomainToBoil(sub)
+	domain.SubDomainToBoil(sub, boilSub)
 
 	foundSub.ActivatedAt = boilSub.ActivatedAt
 	foundSub.ExpiresAt = boilSub.ExpiresAt
@@ -125,7 +129,8 @@ func (s *subscriptionUsecaseBoil) List(ctx context.Context, cond domain.FindSubR
 	domainSubs := make([]*domain.Sub, len(bsubs))
 
 	for i, sub := range bsubs {
-		domainSubs[i] = domain.SubBoilToDomain(sub)
+		domainSubs[i] = &domain.Sub{}
+		domain.SubBoilToDomain(sub, domainSubs[i])
 	}
 
 	return domainSubs, nil

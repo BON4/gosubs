@@ -11,6 +11,15 @@ import (
 	"time"
 )
 
+const deleteAll = `-- name: DeleteAll :exec
+TRUNCATE TABLE sub_history, sub, creator, tguser
+`
+
+func (q *Queries) DeleteAll(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAll)
+	return err
+}
+
 const deleteSub = `-- name: DeleteSub :exec
 DELETE FROM sub
 WHERE user_id = $1 and creator_id = $2
@@ -253,7 +262,7 @@ UPDATE sub
 SET
 	activated_at = COALESCE($1, activated_at),
 	expires_at = COALESCE($2, expires_at),
-	status = COALESCE($3, status),
+	status = $3,
 	price = COALESCE($4, price)
 WHERE
 	user_id = $5 and creator_id = $6
@@ -263,7 +272,7 @@ RETURNING user_id, creator_id, activated_at, expires_at, status, price
 type UpdateSubParams struct {
 	ActivatedAt sql.NullTime  `db:"activated_at"`
 	ExpiresAt   sql.NullTime  `db:"expires_at"`
-	Status      NullSubStatus `db:"status"`
+	Status      SubStatus     `db:"status"`
 	Price       sql.NullInt32 `db:"price"`
 	UserID      int64         `db:"user_id"`
 	CreatorID   int64         `db:"creator_id"`

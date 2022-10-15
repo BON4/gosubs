@@ -30,7 +30,9 @@ func (c *creatorUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Cre
 		}
 		return nil, err
 	}
-	return domain.CreatorBoilToDomain(creator), nil
+	domainCreator := &domain.Creator{}
+	domain.CreatorBoilToDomain(creator, domainCreator)
+	return domainCreator, nil
 }
 
 func (c *creatorUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*domain.Creator, error) {
@@ -41,8 +43,9 @@ func (c *creatorUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*do
 		}
 		return nil, err
 	}
-
-	return domain.CreatorBoilToDomain(creator), nil
+	domainCreator := &domain.Creator{}
+	domain.CreatorBoilToDomain(creator, domainCreator)
+	return domainCreator, nil
 }
 
 func (c *creatorUsecaseBoil) Create(ctx context.Context, creator *domain.Creator) error {
@@ -55,14 +58,15 @@ func (c *creatorUsecaseBoil) Create(ctx context.Context, creator *domain.Creator
 		return errors.New("already exist")
 	}
 
-	boilCreator := domain.CreatorDomainToBoil(creator)
+	boilCreator := &boilmodels.Creator{}
+	domain.CreatorDomainToBoil(creator, boilCreator)
 
 	// Insert
 	if err := boilCreator.Insert(ctx, c.db, boil.Infer()); err != nil {
 		return err
 	}
 
-	creator = domain.CreatorBoilToDomain(boilCreator)
+	domain.CreatorBoilToDomain(boilCreator, creator)
 
 	return nil
 }
@@ -105,7 +109,8 @@ func (c *creatorUsecaseBoil) Update(ctx context.Context, creator *domain.Creator
 		return err
 	}
 
-	boilCreator := domain.CreatorDomainToBoil(creator)
+	boilCreator := &boilmodels.Creator{}
+	domain.CreatorDomainToBoil(creator, boilCreator)
 
 	foundCreator.TelegramID = boilCreator.TelegramID
 	foundCreator.Username = boilCreator.Username
@@ -115,7 +120,7 @@ func (c *creatorUsecaseBoil) Update(ctx context.Context, creator *domain.Creator
 
 	_, err = foundCreator.Update(ctx, c.db, boil.Infer())
 
-	creator = domain.CreatorBoilToDomain(foundCreator)
+	domain.CreatorBoilToDomain(boilCreator, creator)
 
 	return err
 }
@@ -129,7 +134,8 @@ func (c *creatorUsecaseBoil) List(ctx context.Context, cond domain.FindCreatorRe
 	domainCreators := make([]*domain.Creator, len(bcreators))
 
 	for i, creator := range bcreators {
-		domainCreators[i] = domain.CreatorBoilToDomain(creator)
+		domainCreators[i] = &domain.Creator{}
+		domain.CreatorBoilToDomain(creator, domainCreators[i])
 	}
 
 	return domainCreators, nil

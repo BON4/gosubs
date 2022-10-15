@@ -218,8 +218,8 @@ type subL struct{}
 
 var (
 	subAllColumns            = []string{"user_id", "creator_id", "activated_at", "expires_at", "status", "price"}
-	subColumnsWithoutDefault = []string{"user_id", "creator_id", "status"}
-	subColumnsWithDefault    = []string{"activated_at", "expires_at", "price"}
+	subColumnsWithoutDefault = []string{"user_id", "creator_id"}
+	subColumnsWithDefault    = []string{"activated_at", "expires_at", "status", "price"}
 	subPrimaryKeyColumns     = []string{"user_id", "creator_id"}
 	subGeneratedColumns      = []string{}
 )

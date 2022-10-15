@@ -28,7 +28,10 @@ func (u *tgUserUsecaseSqlc) GetByID(ctx context.Context, id int64) (*domain.Tgus
 		}
 		return nil, err
 	}
-	return domain.TguserSqlcToDomain(user), nil
+
+	domainUser := &domain.Tguser{}
+	domain.TguserSqlcToDomain(user, domainUser)
+	return domainUser, nil
 }
 
 func (u *tgUserUsecaseSqlc) GetByTelegramID(ctx context.Context, id int64) (*domain.Tguser, error) {
@@ -39,7 +42,10 @@ func (u *tgUserUsecaseSqlc) GetByTelegramID(ctx context.Context, id int64) (*dom
 		}
 		return nil, err
 	}
-	return domain.TguserSqlcToDomain(user), nil
+
+	domainUser := &domain.Tguser{}
+	domain.TguserSqlcToDomain(user, domainUser)
+	return domainUser, nil
 }
 
 // Create - will create new user.
@@ -49,8 +55,8 @@ func (u *tgUserUsecaseSqlc) Create(ctx context.Context, tguser *domain.Tguser) e
 	} else if ok {
 		return errors.New("already exist")
 	}
-
-	sqlcUser := domain.TguserDomainToSqlc(tguser)
+	sqlcUser := &sqlcmodels.Tguser{}
+	domain.TguserDomainToSqlc(tguser, sqlcUser)
 
 	var err error
 	// Insert
@@ -64,7 +70,7 @@ func (u *tgUserUsecaseSqlc) Create(ctx context.Context, tguser *domain.Tguser) e
 		return err
 	}
 
-	tguser = domain.TguserSqlcToDomain(sqlcUser)
+	domain.TguserSqlcToDomain(sqlcUser, tguser)
 
 	return nil
 }
@@ -84,8 +90,8 @@ func (u *tgUserUsecaseSqlc) Update(ctx context.Context, tguser *domain.Tguser) e
 		}
 		return err
 	}
-
-	sqlcUser := domain.TguserDomainToSqlc(tguser)
+	sqlcUser := &sqlcmodels.Tguser{}
+	domain.TguserDomainToSqlc(tguser, sqlcUser)
 
 	sqlcUser, err = u.db.UpdateTguser(ctx, sqlcmodels.UpdateTguserParams{
 		TelegramID: sql.NullInt64{
@@ -103,7 +109,7 @@ func (u *tgUserUsecaseSqlc) Update(ctx context.Context, tguser *domain.Tguser) e
 		UserID: sqlcUser.UserID,
 	})
 
-	tguser = domain.TguserSqlcToDomain(sqlcUser)
+	domain.TguserSqlcToDomain(sqlcUser, tguser)
 	return err
 }
 
@@ -120,7 +126,8 @@ func (u *tgUserUsecaseSqlc) List(ctx context.Context, cond domain.FindUserReques
 	domainUsers := make([]*domain.Tguser, len(susers))
 
 	for i, user := range susers {
-		domainUsers[i] = domain.TguserSqlcToDomain(user)
+		domainUsers[i] = &domain.Tguser{}
+		domain.TguserSqlcToDomain(user, domainUsers[i])
 	}
 
 	return domainUsers, nil

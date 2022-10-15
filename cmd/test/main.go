@@ -9,8 +9,9 @@ import (
 	"time"
 
 	creator_usecase "github.com/BON4/gosubs/internal/creator/usecase"
+	"github.com/BON4/gosubs/internal/domain"
 	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
-	sub_usecase "github.com/BON4/gosubs/internal/subscription/usecase"
+	sub_usecase "github.com/BON4/gosubs/internal/subscription/usecase/boil"
 	tguser_usecase "github.com/BON4/gosubs/internal/tguser/usecase"
 	_ "github.com/lib/pq"
 	"github.com/volatiletech/null/v8"
@@ -98,21 +99,26 @@ func main() {
 	cuc := creator_usecase.NewBoilCretorUsecase(db)
 	suc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
-	users := make([]*boilmodels.Tguser, 10)
-	creator := randomCreator()
-	subs := make([]*boilmodels.Sub, 10)
+	users := make([]*domain.Tguser, 10)
 
-	if err := cuc.Create(ctx, creator); err != nil {
+	domainCreator := &domain.Creator{}
+	domain.CreatorBoilToDomain(randomCreator(), domainCreator)
+
+	subs := make([]*domain.Sub, 10)
+
+	if err := cuc.Create(ctx, domainCreator); err != nil {
 		panic(err)
 	}
 
 	for i := 0; i < 10; i++ {
-		users[i] = randomUser()
+		users[i] = &domain.Tguser{}
+		domain.TguserBoilToDomain(randomUser(), users[i])
+
 		if err := uuc.Create(ctx, users[i]); err != nil {
 			panic(err)
 		}
-
-		subs[i] = randomSub(users[i].UserID, creator.CreatorID)
+		subs[i] = &domain.Sub{}
+		domain.SubBoilToDomain(randomSub(users[i].UserID, domainCreator.CreatorID), subs[i])
 
 		if err := suc.Create(ctx, subs[i]); err != nil {
 			panic(err)
@@ -122,7 +128,7 @@ func main() {
 	from := 100
 	to := 500
 
-	found, err := suc.List(ctx, boilmodels.FindSubRequest{
+	found, err := suc.List(ctx, domain.FindSubRequest{
 		Price: &struct {
 			Eq    *int `json:"eq,omitempty"`
 			Range *struct {
@@ -153,86 +159,6 @@ func main() {
 	for _, s := range found {
 		fmt.Printf("%+v\n", s)
 	}
-}
-
-func main1() {
-	// Open handle to database like normal
-	db, err := connectDB()
-	if err != nil {
-		panic(err)
-	}
-
-	boil.SetDB(db)
 
 	deleteAll()
-
-	user1 := boilmodels.Tguser{
-		TelegramID: 12345,
-		Username:   "test1_username",
-		Status:     boilmodels.UserStatusCreator,
-	}
-
-	user2 := boilmodels.Tguser{
-		TelegramID: 12346,
-		Username:   "test2_username",
-		Status:     boilmodels.UserStatusMember,
-	}
-
-	if err := user2.InsertG(context.TODO(), boil.Infer()); err != nil {
-		panic(err)
-	}
-
-	users, err := boilmodels.Tgusers().All(context.TODO(), boil.GetContextDB())
-	if err != nil {
-		panic(err)
-	}
-
-	for _, user := range users {
-		fmt.Printf("User: %+v\n", user)
-	}
-
-	creator := boilmodels.Creator{
-		TelegramID: user1.TelegramID,
-		Username:   user1.Username,
-		Password:   null.BytesFrom([]byte("password")),
-		Email:      null.StringFrom("email@mail.com"),
-		ChanName:   null.StringFrom("test_channel"),
-	}
-
-	if err := creator.InsertG(context.TODO(), boil.Infer()); err != nil {
-		panic(err)
-	}
-
-	creators, err := boilmodels.Creators().All(context.TODO(), boil.GetContextDB())
-	if err != nil {
-		panic(err)
-	}
-
-	for _, creator := range creators {
-		fmt.Printf("Creator: %+v\n", creator)
-	}
-
-	sub := boilmodels.Sub{
-		UserID:      user2.UserID,
-		CreatorID:   creator.CreatorID,
-		ActivatedAt: time.Now(),
-		ExpiresAt:   time.Now().Add(time.Hour),
-		Status:      boilmodels.SubStatusActive,
-		Price:       null.IntFrom(599),
-	}
-
-	if err := sub.InsertG(context.TODO(), boil.Infer()); err != nil {
-		panic(err)
-	}
-
-	subs, err := boilmodels.Subs().All(context.TODO(), boil.GetContextDB())
-	if err != nil {
-		panic(err)
-	}
-
-	for _, sub := range subs {
-		fmt.Printf("Sub: %+v\n", sub)
-	}
-
-	// deleteAll()
 }

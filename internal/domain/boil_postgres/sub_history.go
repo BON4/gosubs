@@ -131,8 +131,8 @@ type subHistoryL struct{}
 
 var (
 	subHistoryAllColumns            = []string{"user_id", "creator_id", "activated_at", "expires_at", "status", "price", "sub_hist_id"}
-	subHistoryColumnsWithoutDefault = []string{"user_id", "creator_id", "status"}
-	subHistoryColumnsWithDefault    = []string{"activated_at", "expires_at", "price", "sub_hist_id"}
+	subHistoryColumnsWithoutDefault = []string{"user_id", "creator_id"}
+	subHistoryColumnsWithDefault    = []string{"activated_at", "expires_at", "status", "price", "sub_hist_id"}
 	subHistoryPrimaryKeyColumns     = []string{"sub_hist_id"}
 	subHistoryGeneratedColumns      = []string{}
 )

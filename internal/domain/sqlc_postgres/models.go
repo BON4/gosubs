@@ -17,6 +17,7 @@ const (
 	SubStatusExpired   SubStatus = "expired"
 	SubStatusActive    SubStatus = "active"
 	SubStatusCancelled SubStatus = "cancelled"
+	SubStatusInactive  SubStatus = "inactive"
 )
 
 func (e *SubStatus) Scan(src interface{}) error {

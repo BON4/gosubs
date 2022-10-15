@@ -1,0 +1,3 @@
+BenchmarkSubList-4   	     255	   4937720 ns/op
+
+BenchmarkSubList-4   	     314	   5819168 ns/op

@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	DeleteAll(ctx context.Context) error
 	DeleteCreator(ctx context.Context, creatorID int64) error
 	DeleteSub(ctx context.Context, arg DeleteSubParams) error
 	DeleteSubCreator(ctx context.Context, creatorID int64) error

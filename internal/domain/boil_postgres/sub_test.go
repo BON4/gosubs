@@ -777,7 +777,7 @@ func testSubsSelect(t *testing.T) {
 }
 
 var (
-	subDBTypes = map[string]string{`UserID`: `bigint`, `CreatorID`: `bigint`, `ActivatedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `enum.sub_status('expired','active','cancelled')`, `Price`: `integer`}
+	subDBTypes = map[string]string{`UserID`: `bigint`, `CreatorID`: `bigint`, `ActivatedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `enum.sub_status('expired','active','cancelled','inactive')`, `Price`: `integer`}
 	_          = bytes.MinRead
 )
 

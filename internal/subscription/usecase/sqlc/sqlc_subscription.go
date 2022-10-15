@@ -31,7 +31,8 @@ func (s *subscriptionUsecaseSqlc) Create(ctx context.Context, sub *domain.Sub) e
 		return errors.New("sub already exist")
 	}
 
-	sqlcSub := domain.SubDomainToSqlc(sub)
+	sqlcSub := &sqlcmodels.Sub{}
+	domain.SubDomainToSqlc(sub, sqlcSub)
 
 	var err error
 	// Insert
@@ -48,14 +49,15 @@ func (s *subscriptionUsecaseSqlc) Create(ctx context.Context, sub *domain.Sub) e
 		return err
 	}
 
-	sub = domain.SubSqlcToDomain(sqlcSub)
+	domain.SubSqlcToDomain(sqlcSub, sub)
 
 	return nil
 }
 
 // Save - saves subscription to history table.
 func (s *subscriptionUsecaseSqlc) Save(ctx context.Context, sub *domain.Sub) (int64, error) {
-	sqlcSub := domain.SubDomainToSqlc(sub)
+	sqlcSub := &sqlcmodels.Sub{}
+	domain.SubDomainToSqlc(sub, sqlcSub)
 
 	subhist, err := s.db.SaveSub(ctx, sqlcmodels.SaveSubParams{
 		UserID:      sub.UserID,
@@ -81,8 +83,8 @@ func (s *subscriptionUsecaseSqlc) Update(ctx context.Context, sub *domain.Sub) e
 		}
 		return err
 	}
-
-	sqlcSub := domain.SubDomainToSqlc(sub)
+	sqlcSub := &sqlcmodels.Sub{}
+	domain.SubDomainToSqlc(sub, sqlcSub)
 
 	sqlcSub, err = s.db.UpdateSub(ctx, sqlcmodels.UpdateSubParams{
 		UserID:    sqlcSub.UserID,
@@ -95,14 +97,11 @@ func (s *subscriptionUsecaseSqlc) Update(ctx context.Context, sub *domain.Sub) e
 			Time:  sqlcSub.ExpiresAt,
 			Valid: true,
 		},
-		Status: sqlcmodels.NullSubStatus{
-			SubStatus: sqlcSub.Status,
-			Valid:     true,
-		},
-		Price: sqlcSub.Price,
+		Status: sqlcSub.Status,
+		Price:  sqlcSub.Price,
 	})
 
-	sub = domain.SubSqlcToDomain(sqlcSub)
+	domain.SubSqlcToDomain(sqlcSub, sub)
 	return err
 }
 
@@ -115,7 +114,11 @@ func (s *subscriptionUsecaseSqlc) Delete(ctx context.Context, userID int64, crea
 }
 
 func (s *subscriptionUsecaseSqlc) List(ctx context.Context, cond domain.FindSubRequest) ([]*domain.Sub, error) {
-	lstParams := sqlcmodels.ListSubParams{}
+	lstParams := sqlcmodels.ListSubParams{
+		PageNumber: int32(cond.PageSettings.PageNumber),
+		PageSize:   int32(cond.PageSettings.PageSize),
+		StatusEq:   sqlcmodels.SubStatusCancelled,
+	}
 
 	if cond.CreatorID != nil {
 		lstParams.IsCreatorIDEq = true
@@ -132,29 +135,30 @@ func (s *subscriptionUsecaseSqlc) List(ctx context.Context, cond domain.FindSubR
 		lstParams.StatusEq = sqlcmodels.SubStatus(cond.Status.Eq)
 	}
 
-	if cond.Price.Eq != nil {
-		lstParams.IsPriceEq = true
-		lstParams.PriceEq = sql.NullInt32{
-			Int32: int32(*cond.Price.Eq),
-			Valid: true,
-		}
-	} else if cond.Price.Range != nil {
-		if cond.Price.Range.From != nil {
-			lstParams.IsPriceFrom = true
-			lstParams.PriceFrom = sql.NullInt32{
-				Int32: int32(*cond.Price.Range.From),
+	if cond.Price != nil {
+		if cond.Price.Eq != nil {
+			lstParams.IsPriceEq = true
+			lstParams.PriceEq = sql.NullInt32{
+				Int32: int32(*cond.Price.Eq),
 				Valid: true,
 			}
-		}
+		} else if cond.Price.Range != nil {
+			if cond.Price.Range.From != nil {
+				lstParams.IsPriceFrom = true
+				lstParams.PriceFrom = sql.NullInt32{
+					Int32: int32(*cond.Price.Range.From),
+					Valid: true,
+				}
+			}
 
-		if cond.Price.Range.To != nil {
-			lstParams.IsPriceTo = true
-			lstParams.PriceTo = sql.NullInt32{
-				Int32: int32(*cond.Price.Range.To),
-				Valid: true,
+			if cond.Price.Range.To != nil {
+				lstParams.IsPriceTo = true
+				lstParams.PriceTo = sql.NullInt32{
+					Int32: int32(*cond.Price.Range.To),
+					Valid: true,
+				}
 			}
 		}
-
 	}
 
 	sqlcSubs, err := s.db.ListSub(ctx, lstParams)
@@ -165,7 +169,8 @@ func (s *subscriptionUsecaseSqlc) List(ctx context.Context, cond domain.FindSubR
 	domainSubs := make([]*domain.Sub, len(sqlcSubs))
 
 	for i, sub := range sqlcSubs {
-		domainSubs[i] = domain.SubSqlcToDomain(sub)
+		domainSubs[i] = &domain.Sub{}
+		domain.SubSqlcToDomain(sub, domainSubs[i])
 	}
 
 	return domainSubs, nil
