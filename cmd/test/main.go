@@ -94,8 +94,8 @@ func main() {
 
 	ctx := context.TODO()
 
-	uuc := tguser_usecase.NewTgUserUsecase(db)
-	cuc := creator_usecase.NewCretorUsecase(db)
+	uuc := tguser_usecase.NewBoilTgUserUsecase(db)
+	cuc := creator_usecase.NewBoilCretorUsecase(db)
 	suc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
 	users := make([]*boilmodels.Tguser, 10)

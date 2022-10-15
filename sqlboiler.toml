@@ -1,5 +1,5 @@
-output   = "./internal/domain/postgres"
-#wipe     = true
+output   = "./internal/domain/boil_postgres"
+wipe     = true
 pkgname  = "models"
 add-enum-types = true
 add-global-variants = true

@@ -6,13 +6,17 @@ WHERE creator_id = $1 LIMIT 1;
 SELECT * FROM creator
 WHERE creator_id = $1 LIMIT 1;
 
+-- name: IsExistCreator :one
+SELECT EXISTS (SELECT * FROM creator
+WHERE telegram_id = $1);
+
 -- name: InsertCreator :one
 INSERT INTO Creator (
-       	TelegramID,
+       	Telegram_id,
 	Username,
        	Password,
 	Email,
-	ChanName
+	Chan_Name
 ) VALUES (
   $1, $2, $3, $4, $5
 ) RETURNING *;
@@ -24,11 +28,14 @@ WHERE creator_id == $1;
 -- name: UpdateCreator :one
 UPDATE creator
 SET
-	TelegramID = COALESCE(sqlc.narg(telegramid), telegramid),
+	Telegram_id = COALESCE(sqlc.narg(telegram_id), telegram_id),
 	Username = COALESCE(sqlc.narg(username), username),
 	Password = COALESCE(sqlc.narg(password), password),
 	Email = COALESCE(sqlc.narg(email), email),
-	ChanName = COALESCE(sqlc.narg(channame), channame)
+	Chan_Name = COALESCE(sqlc.narg(chan_name), chan_name)
 WHERE
 	creator_id = sqlc.arg(creator_id)
 RETURNING *;
+
+-- name: ListCreator :many
+SELECT * FROM creator OFFSET $1 LIMIT $2;

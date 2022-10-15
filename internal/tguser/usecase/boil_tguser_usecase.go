@@ -11,17 +11,17 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type tgUserUsecase struct {
+type tgUserUsecaseBoil struct {
 	db *sql.DB
 }
 
-func NewTgUserUsecase(db *sql.DB) domain.TgUserUsecase {
-	return &tgUserUsecase{
+func NewBoilTgUserUsecase(db *sql.DB) domain.TgUserUsecase {
+	return &tgUserUsecaseBoil{
 		db: db,
 	}
 }
 
-func (u *tgUserUsecase) GetByID(ctx context.Context, id int64) (*domain.Tguser, error) {
+func (u *tgUserUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Tguser, error) {
 	user, err := boilmodels.FindTguser(ctx, u.db, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -32,7 +32,7 @@ func (u *tgUserUsecase) GetByID(ctx context.Context, id int64) (*domain.Tguser, 
 	return domain.TguserBoilToDomain(user), nil
 }
 
-func (u *tgUserUsecase) GetByTelegramID(ctx context.Context, id int64) (*domain.Tguser, error) {
+func (u *tgUserUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*domain.Tguser, error) {
 	user := &boilmodels.Tguser{}
 	if err := boilmodels.Tgusers(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, u.db, user); err != nil {
 		if err != nil {
@@ -45,7 +45,7 @@ func (u *tgUserUsecase) GetByTelegramID(ctx context.Context, id int64) (*domain.
 }
 
 // Create - will create new user.
-func (u *tgUserUsecase) Create(ctx context.Context, tguser *domain.Tguser) error {
+func (u *tgUserUsecaseBoil) Create(ctx context.Context, tguser *domain.Tguser) error {
 	// IsExist. Check if user is already exist.
 	if _, err := boilmodels.Tgusers(qm.Where("telegram_id=?", tguser.TelegramID)).One(ctx, u.db); err != nil {
 		if err != sql.ErrNoRows {
@@ -69,7 +69,7 @@ func (u *tgUserUsecase) Create(ctx context.Context, tguser *domain.Tguser) error
 }
 
 // Delete - will delete user. Subscription will be deleted also.
-func (u *tgUserUsecase) Delete(ctx context.Context, id int64) error {
+func (u *tgUserUsecaseBoil) Delete(ctx context.Context, id int64) error {
 	tx, err := u.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (u *tgUserUsecase) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (u *tgUserUsecase) Update(ctx context.Context, tguser *domain.Tguser) error {
+func (u *tgUserUsecaseBoil) Update(ctx context.Context, tguser *domain.Tguser) error {
 	user, err := boilmodels.FindTguser(ctx, u.db, tguser.UserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -118,7 +118,7 @@ func (u *tgUserUsecase) Update(ctx context.Context, tguser *domain.Tguser) error
 	return err
 }
 
-func (u *tgUserUsecase) List(ctx context.Context, cond domain.FindUserRequest) ([]*domain.Tguser, error) {
+func (u *tgUserUsecaseBoil) List(ctx context.Context, cond domain.FindUserRequest) ([]*domain.Tguser, error) {
 	busers, err := boilmodels.Tgusers(qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize))).All(ctx, u.db)
 	if err != nil {
 		return make([]*domain.Tguser, 0), err

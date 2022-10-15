@@ -6,9 +6,15 @@ WHERE user_id = $1 LIMIT 1;
 SELECT * FROM tguser
 WHERE telegram_id = $1 LIMIT 1;
 
+
+-- name: IsExistTguser :one
+SELECT EXISTS (SELECT * FROM tguser
+WHERE telegram_id = $1);
+
+
 -- name: InsertTguser :one
 INSERT INTO tguser (
-       TelegramID,
+       Telegram_id,
        Username,
        Status
 ) VALUES (
@@ -22,9 +28,12 @@ WHERE user_id == $1;
 -- name: UpdateTguser :one
 UPDATE tguser
 SET
-	TelegramID = COALESCE(sqlc.narg(telegramid), telegramid),
+	Telegram_id = COALESCE(sqlc.narg(telegram_id), telegram_id),
 	Username = COALESCE(sqlc.narg(username), username),
 	Status = COALESCE(sqlc.narg(status), status)
 WHERE
 	user_id = sqlc.arg(user_id)
 RETURNING *;
+
+-- name: ListTguser :many
+SELECT * FROM tguser OFFSET $1 LIMIT $2;

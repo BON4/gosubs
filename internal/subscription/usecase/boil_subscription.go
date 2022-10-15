@@ -12,18 +12,18 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type subscriptionUsecase struct {
+type subscriptionUsecaseBoil struct {
 	db *sql.DB
 }
 
 func NewBoilSubscriptionUsecase(db *sql.DB) domain.SubscriptionUsecase {
-	return &subscriptionUsecase{
+	return &subscriptionUsecaseBoil{
 		db: db,
 	}
 }
 
 // Create - creates subscribtion
-func (s *subscriptionUsecase) Create(ctx context.Context, sub *domain.Sub) error {
+func (s *subscriptionUsecaseBoil) Create(ctx context.Context, sub *domain.Sub) error {
 	if _, err := boilmodels.FindSub(ctx, s.db, sub.UserID, sub.CreatorID); err != nil {
 		if err != sql.ErrNoRows {
 			return err
@@ -44,7 +44,7 @@ func (s *subscriptionUsecase) Create(ctx context.Context, sub *domain.Sub) error
 }
 
 // Save - saves subscription to history table.
-func (s *subscriptionUsecase) Save(ctx context.Context, sub *domain.Sub) (int64, error) {
+func (s *subscriptionUsecaseBoil) Save(ctx context.Context, sub *domain.Sub) (int64, error) {
 	boilSub := domain.SubDomainToBoil(sub)
 
 	subhist := boilmodels.SubHistory{
@@ -60,7 +60,7 @@ func (s *subscriptionUsecase) Save(ctx context.Context, sub *domain.Sub) (int64,
 	return subhist.SubHistID, err
 }
 
-func (s *subscriptionUsecase) Update(ctx context.Context, sub *domain.Sub) error {
+func (s *subscriptionUsecaseBoil) Update(ctx context.Context, sub *domain.Sub) error {
 	foundSub, err := boilmodels.FindSub(ctx, s.db, sub.UserID, sub.CreatorID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -80,13 +80,13 @@ func (s *subscriptionUsecase) Update(ctx context.Context, sub *domain.Sub) error
 	return err
 }
 
-func (s *subscriptionUsecase) Delete(ctx context.Context, userID int64, creatorID int64) error {
+func (s *subscriptionUsecaseBoil) Delete(ctx context.Context, userID int64, creatorID int64) error {
 	// Delete subscription
 	_, err := boilmodels.Subs(qm.Where("user_id=? and creator_id=?", userID, creatorID)).DeleteAll(ctx, s.db)
 	return err
 }
 
-func (s *subscriptionUsecase) List(ctx context.Context, cond domain.FindSubRequest) ([]*domain.Sub, error) {
+func (s *subscriptionUsecaseBoil) List(ctx context.Context, cond domain.FindSubRequest) ([]*domain.Sub, error) {
 	var conds []qm.QueryMod = make([]qm.QueryMod, 0, 1)
 	if cond.Price != nil {
 		if cond.Price.Eq != nil {

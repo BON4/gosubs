@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"database/sql"
 	"time"
 
 	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	sqlcmodels "github.com/BON4/gosubs/internal/domain/sqlc_postgres"
 	"github.com/volatiletech/null/v8"
 )
 
@@ -35,7 +37,25 @@ func TguserDomainToBoil(user *Tguser) *boilmodels.Tguser {
 	}
 }
 
+func TguserDomainToSqlc(user *Tguser) *sqlcmodels.Tguser {
+	return &boilmodels.Tguser{
+		UserID:     user.UserID,
+		TelegramID: user.TelegramID,
+		Username:   user.Username,
+		Status:     boilmodels.UserStatus(user.Status),
+	}
+}
+
 func TguserBoilToDomain(user *boilmodels.Tguser) *Tguser {
+	return &Tguser{
+		UserID:     user.UserID,
+		TelegramID: user.TelegramID,
+		Username:   user.Username,
+		Status:     UserStatus(user.Status),
+	}
+}
+
+func TguserSqlcToDomain(user *sqlcmodels.Tguser) *Tguser {
 	return &Tguser{
 		UserID:     user.UserID,
 		TelegramID: user.TelegramID,
@@ -75,6 +95,28 @@ func CreatorBoilToDomain(creator *boilmodels.Creator) *Creator {
 	}
 }
 
+func CreatorDomainToSqlc(creator *Creator) *sqlcmodels.Creator {
+	return &boilmodels.Creator{
+		CreatorID:  creator.CreatorID,
+		TelegramID: creator.TelegramID,
+		Username:   creator.Username,
+		Password:   creator.Password,
+		Email:      creator.Email,
+		ChanName:   creator.ChanName,
+	}
+}
+
+func CreatorSqlcToDomain(creator *sqlcmodels.Creator) *Creator {
+	return &Creator{
+		CreatorID:  creator.CreatorID,
+		TelegramID: creator.TelegramID,
+		Username:   creator.Username,
+		Password:   null.NewBytes(creator.Password, len(creator.Password) < 0),
+		Email:      null.NewString(creator.Email.String, creator.Email.Valid),
+		ChanName:   null.NewString(creator.ChanName.String, creator.ChanName.Valid),
+	}
+}
+
 type Sub struct {
 	UserID      int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 	CreatorID   int64     `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
@@ -103,6 +145,31 @@ func SubBoilToDomain(sub *boilmodels.Sub) *Sub {
 		ExpiresAt:   sub.ExpiresAt,
 		Status:      SubStatus(sub.Status),
 		Price:       sub.Price,
+	}
+}
+
+func SubDomainToSqlc(sub *Sub) *sqlcmodels.Sub {
+	return &sqlcmodels.Sub{
+		UserID:      sub.UserID,
+		CreatorID:   sub.CreatorID,
+		ActivatedAt: sub.ActivatedAt,
+		ExpiresAt:   sub.ExpiresAt,
+		Status:      sqlcmodels.SubStatus(sub.Status),
+		Price: sql.NullInt32{
+			Int32: int32(sub.Price.Int),
+			Valid: sub.Price.Valid,
+		},
+	}
+}
+
+func SubSqlcToDomain(sub *sqlcmodels.Sub) *Sub {
+	return &Sub{
+		UserID:      sub.UserID,
+		CreatorID:   sub.CreatorID,
+		ActivatedAt: sub.ActivatedAt,
+		ExpiresAt:   sub.ExpiresAt,
+		Status:      SubStatus(sub.Status),
+		Price:       null.NewInt(int(sub.Price.Int32), sub.Price.Valid),
 	}
 }
 
@@ -146,5 +213,32 @@ func SubHistoryBoilToDomain(sub *boilmodels.SubHistory) *SubHistory {
 		ExpiresAt:   sub.ExpiresAt,
 		Status:      SubStatus(sub.Status),
 		Price:       sub.Price,
+	}
+}
+
+func SubHistoryDomainToSqlc(sub *SubHistory) *sqlcmodels.SubHistory {
+	return &sqlcmodels.SubHistory{
+		SubHistID:   sub.SubHistID,
+		UserID:      sub.UserID,
+		CreatorID:   sub.CreatorID,
+		ActivatedAt: sub.ActivatedAt,
+		ExpiresAt:   sub.ExpiresAt,
+		Status:      sqlcmodels.SubStatus(sub.Status),
+		Price: sql.NullInt32{
+			Int32: int32(sub.Price.Int),
+			Valid: sub.Price.Valid,
+		},
+	}
+}
+
+func SubHistorySqlcToDomain(sub *sqlcmodels.SubHistory) *SubHistory {
+	return &SubHistory{
+		SubHistID:   sub.SubHistID,
+		UserID:      sub.UserID,
+		CreatorID:   sub.CreatorID,
+		ActivatedAt: sub.ActivatedAt,
+		ExpiresAt:   sub.ExpiresAt,
+		Status:      SubStatus(sub.Status),
+		Price:       null.NewInt(int(sub.Price.Int32), sub.Price.Valid),
 	}
 }

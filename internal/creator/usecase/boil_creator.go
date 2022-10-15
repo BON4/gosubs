@@ -12,17 +12,17 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type creatorUsecase struct {
+type creatorUsecaseBoil struct {
 	db *sql.DB
 }
 
-func NewCretorUsecase(db *sql.DB) domain.CreatorUsecase {
-	return &creatorUsecase{
+func NewBoilCretorUsecase(db *sql.DB) domain.CreatorUsecase {
+	return &creatorUsecaseBoil{
 		db: db,
 	}
 }
 
-func (c *creatorUsecase) GetByID(ctx context.Context, id int64) (*domain.Creator, error) {
+func (c *creatorUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Creator, error) {
 	creator, err := boilmodels.FindCreator(ctx, c.db, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -33,7 +33,7 @@ func (c *creatorUsecase) GetByID(ctx context.Context, id int64) (*domain.Creator
 	return domain.CreatorBoilToDomain(creator), nil
 }
 
-func (c *creatorUsecase) GetByTelegramID(ctx context.Context, id int64) (*domain.Creator, error) {
+func (c *creatorUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*domain.Creator, error) {
 	creator := &boilmodels.Creator{}
 	if err := boilmodels.Creators(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, c.db, creator); err != nil {
 		if err == sql.ErrNoRows {
@@ -45,7 +45,7 @@ func (c *creatorUsecase) GetByTelegramID(ctx context.Context, id int64) (*domain
 	return domain.CreatorBoilToDomain(creator), nil
 }
 
-func (c *creatorUsecase) Create(ctx context.Context, creator *domain.Creator) error {
+func (c *creatorUsecaseBoil) Create(ctx context.Context, creator *domain.Creator) error {
 	if _, err := boilmodels.Creators(qm.Where("telegram_id=?", creator.TelegramID)).One(ctx, c.db); err != nil {
 		if err != sql.ErrNoRows {
 			return err
@@ -68,7 +68,7 @@ func (c *creatorUsecase) Create(ctx context.Context, creator *domain.Creator) er
 }
 
 // Delete - will delete creator. Subscriptions will be deleted also.
-func (c *creatorUsecase) Delete(ctx context.Context, id int64) error {
+func (c *creatorUsecaseBoil) Delete(ctx context.Context, id int64) error {
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (c *creatorUsecase) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (c *creatorUsecase) Update(ctx context.Context, creator *domain.Creator) error {
+func (c *creatorUsecaseBoil) Update(ctx context.Context, creator *domain.Creator) error {
 	foundCreator, err := boilmodels.FindCreator(ctx, c.db, creator.CreatorID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -120,7 +120,7 @@ func (c *creatorUsecase) Update(ctx context.Context, creator *domain.Creator) er
 	return err
 }
 
-func (c *creatorUsecase) List(ctx context.Context, cond domain.FindCreatorRequest) ([]*domain.Creator, error) {
+func (c *creatorUsecaseBoil) List(ctx context.Context, cond domain.FindCreatorRequest) ([]*domain.Creator, error) {
 	bcreators, err := boilmodels.Creators(qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize))).All(ctx, c.db)
 	if err != nil {
 		return make([]*domain.Creator, 0), err
