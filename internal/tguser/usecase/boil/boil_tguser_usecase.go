@@ -24,9 +24,9 @@ func NewBoilTgUserUsecase(db *sql.DB) domain.TgUserUsecase {
 func (u *tgUserUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Tguser, error) {
 	user, err := boilmodels.FindTguser(ctx, u.db, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("user does not exist")
-		}
+		// if err == sql.ErrNoRows {
+		// 	return nil, errors.New("user does not exist")
+		// }
 		return nil, err
 	}
 
@@ -38,9 +38,9 @@ func (u *tgUserUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Tgus
 func (u *tgUserUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*domain.Tguser, error) {
 	user := &boilmodels.Tguser{}
 	if err := boilmodels.Tgusers(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, u.db, user); err != nil {
-		if err != nil {
-			return nil, errors.New("user does not exist")
-		}
+		// if err != nil {
+		// 	return nil, errors.New("user does not exist")
+		// }
 		return nil, err
 	}
 

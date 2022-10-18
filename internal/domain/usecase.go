@@ -32,7 +32,7 @@ type FindSubRequest struct {
 		Eq string `json:"eq"`
 	} `json:"status,omitempty"`
 
-	CreatorID *struct {
+	AccountID *struct {
 		Eq int64 `json:"eq"`
 	} `json:"creator_id,omitempty"`
 
@@ -61,7 +61,7 @@ type FindUserRequest struct {
 	} `json:"page_settings"`
 }
 
-type FindCreatorRequest struct {
+type FindAccountRequest struct {
 	// Username *struct {
 	// 	Like string `json:"LIKE"`
 	// 	Eq   string `json:"EQ"`
@@ -93,6 +93,8 @@ type TgUserUsecase interface {
 }
 
 type SubscriptionUsecase interface {
+	GetByID(ctx context.Context, userID int64, creatorID int64) (*Sub, error)
+
 	// Create - creates subscribtion
 	Create(ctx context.Context, sub *Sub) error
 
@@ -106,17 +108,21 @@ type SubscriptionUsecase interface {
 	List(ctx context.Context, cond FindSubRequest) ([]*Sub, error)
 }
 
-type CreatorUsecase interface {
-	GetByID(ctx context.Context, id int64) (*Creator, error)
+type AccountUsecase interface {
+	GetByEmail(ctx context.Context, email string) (*Account, error)
 
-	GetByTelegramID(ctx context.Context, id int64) (*Creator, error)
+	GetByID(ctx context.Context, id int64) (*Account, error)
 
-	Create(ctx context.Context, creator *Creator) error
+	GetByTelegramID(ctx context.Context, id int64) (*Account, error)
+
+	GetUser(ctx context.Context, id int64) (*Tguser, error)
+
+	Create(ctx context.Context, creator *Account) error
 
 	// Delete - will delete creator. Subscriptions will be deleted also.
 	Delete(ctx context.Context, id int64) error
 
-	Update(ctx context.Context, tguser *Creator) error
+	Update(ctx context.Context, tguser *Account) error
 
-	List(ctx context.Context, cond FindCreatorRequest) ([]*Creator, error)
+	List(ctx context.Context, cond FindAccountRequest) ([]*Account, error)
 }

@@ -4,13 +4,13 @@
 package models
 
 var TableNames = struct {
-	Creator          string
+	Account          string
 	SchemaMigrations string
 	Sub              string
 	SubHistory       string
 	Tguser           string
 }{
-	Creator:          "creator",
+	Account:          "account",
 	SchemaMigrations: "schema_migrations",
 	Sub:              "sub",
 	SubHistory:       "sub_history",

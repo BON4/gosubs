@@ -12,7 +12,7 @@ import "testing"
 // It does NOT run each operation group in parallel.
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
-	t.Run("Creators", testCreators)
+	t.Run("Accounts", testAccounts)
 	t.Run("SchemaMigrations", testSchemaMigrations)
 	t.Run("Subs", testSubs)
 	t.Run("SubHistories", testSubHistories)
@@ -20,7 +20,7 @@ func TestParent(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	t.Run("Creators", testCreatorsDelete)
+	t.Run("Accounts", testAccountsDelete)
 	t.Run("SchemaMigrations", testSchemaMigrationsDelete)
 	t.Run("Subs", testSubsDelete)
 	t.Run("SubHistories", testSubHistoriesDelete)
@@ -28,7 +28,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestQueryDeleteAll(t *testing.T) {
-	t.Run("Creators", testCreatorsQueryDeleteAll)
+	t.Run("Accounts", testAccountsQueryDeleteAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsQueryDeleteAll)
 	t.Run("Subs", testSubsQueryDeleteAll)
 	t.Run("SubHistories", testSubHistoriesQueryDeleteAll)
@@ -36,7 +36,7 @@ func TestQueryDeleteAll(t *testing.T) {
 }
 
 func TestSliceDeleteAll(t *testing.T) {
-	t.Run("Creators", testCreatorsSliceDeleteAll)
+	t.Run("Accounts", testAccountsSliceDeleteAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsSliceDeleteAll)
 	t.Run("Subs", testSubsSliceDeleteAll)
 	t.Run("SubHistories", testSubHistoriesSliceDeleteAll)
@@ -44,7 +44,7 @@ func TestSliceDeleteAll(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
-	t.Run("Creators", testCreatorsExists)
+	t.Run("Accounts", testAccountsExists)
 	t.Run("SchemaMigrations", testSchemaMigrationsExists)
 	t.Run("Subs", testSubsExists)
 	t.Run("SubHistories", testSubHistoriesExists)
@@ -52,7 +52,7 @@ func TestExists(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	t.Run("Creators", testCreatorsFind)
+	t.Run("Accounts", testAccountsFind)
 	t.Run("SchemaMigrations", testSchemaMigrationsFind)
 	t.Run("Subs", testSubsFind)
 	t.Run("SubHistories", testSubHistoriesFind)
@@ -60,7 +60,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestBind(t *testing.T) {
-	t.Run("Creators", testCreatorsBind)
+	t.Run("Accounts", testAccountsBind)
 	t.Run("SchemaMigrations", testSchemaMigrationsBind)
 	t.Run("Subs", testSubsBind)
 	t.Run("SubHistories", testSubHistoriesBind)
@@ -68,7 +68,7 @@ func TestBind(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
-	t.Run("Creators", testCreatorsOne)
+	t.Run("Accounts", testAccountsOne)
 	t.Run("SchemaMigrations", testSchemaMigrationsOne)
 	t.Run("Subs", testSubsOne)
 	t.Run("SubHistories", testSubHistoriesOne)
@@ -76,7 +76,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-	t.Run("Creators", testCreatorsAll)
+	t.Run("Accounts", testAccountsAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsAll)
 	t.Run("Subs", testSubsAll)
 	t.Run("SubHistories", testSubHistoriesAll)
@@ -84,7 +84,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	t.Run("Creators", testCreatorsCount)
+	t.Run("Accounts", testAccountsCount)
 	t.Run("SchemaMigrations", testSchemaMigrationsCount)
 	t.Run("Subs", testSubsCount)
 	t.Run("SubHistories", testSubHistoriesCount)
@@ -92,7 +92,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestHooks(t *testing.T) {
-	t.Run("Creators", testCreatorsHooks)
+	t.Run("Accounts", testAccountsHooks)
 	t.Run("SchemaMigrations", testSchemaMigrationsHooks)
 	t.Run("Subs", testSubsHooks)
 	t.Run("SubHistories", testSubHistoriesHooks)
@@ -100,8 +100,8 @@ func TestHooks(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	t.Run("Creators", testCreatorsInsert)
-	t.Run("Creators", testCreatorsInsertWhitelist)
+	t.Run("Accounts", testAccountsInsert)
+	t.Run("Accounts", testAccountsInsertWhitelist)
 	t.Run("SchemaMigrations", testSchemaMigrationsInsert)
 	t.Run("SchemaMigrations", testSchemaMigrationsInsertWhitelist)
 	t.Run("Subs", testSubsInsert)
@@ -115,9 +115,10 @@ func TestInsert(t *testing.T) {
 // TestToOne tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOne(t *testing.T) {
-	t.Run("SubToCreatorUsingCreator", testSubToOneCreatorUsingCreator)
+	t.Run("AccountToTguserUsingUser", testAccountToOneTguserUsingUser)
+	t.Run("SubToAccountUsingAccount", testSubToOneAccountUsingAccount)
 	t.Run("SubToTguserUsingUser", testSubToOneTguserUsingUser)
-	t.Run("SubHistoryToCreatorUsingCreator", testSubHistoryToOneCreatorUsingCreator)
+	t.Run("SubHistoryToAccountUsingAccount", testSubHistoryToOneAccountUsingAccount)
 	t.Run("SubHistoryToTguserUsingUser", testSubHistoryToOneTguserUsingUser)
 }
 
@@ -128,8 +129,9 @@ func TestOneToOne(t *testing.T) {}
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToMany(t *testing.T) {
-	t.Run("CreatorToSubs", testCreatorToManySubs)
-	t.Run("CreatorToSubHistories", testCreatorToManySubHistories)
+	t.Run("AccountToSubs", testAccountToManySubs)
+	t.Run("AccountToSubHistories", testAccountToManySubHistories)
+	t.Run("TguserToUserAccounts", testTguserToManyUserAccounts)
 	t.Run("TguserToUserSubs", testTguserToManyUserSubs)
 	t.Run("TguserToUserSubHistories", testTguserToManyUserSubHistories)
 }
@@ -137,15 +139,18 @@ func TestToMany(t *testing.T) {
 // TestToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneSet(t *testing.T) {
-	t.Run("SubToCreatorUsingSubs", testSubToOneSetOpCreatorUsingCreator)
+	t.Run("AccountToTguserUsingUserAccounts", testAccountToOneSetOpTguserUsingUser)
+	t.Run("SubToAccountUsingSubs", testSubToOneSetOpAccountUsingAccount)
 	t.Run("SubToTguserUsingUserSubs", testSubToOneSetOpTguserUsingUser)
-	t.Run("SubHistoryToCreatorUsingSubHistories", testSubHistoryToOneSetOpCreatorUsingCreator)
+	t.Run("SubHistoryToAccountUsingSubHistories", testSubHistoryToOneSetOpAccountUsingAccount)
 	t.Run("SubHistoryToTguserUsingUserSubHistories", testSubHistoryToOneSetOpTguserUsingUser)
 }
 
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToOneRemove(t *testing.T) {}
+func TestToOneRemove(t *testing.T) {
+	t.Run("AccountToTguserUsingUserAccounts", testAccountToOneRemoveOpTguserUsingUser)
+}
 
 // TestOneToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
@@ -158,22 +163,27 @@ func TestOneToOneRemove(t *testing.T) {}
 // TestToManyAdd tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyAdd(t *testing.T) {
-	t.Run("CreatorToSubs", testCreatorToManyAddOpSubs)
-	t.Run("CreatorToSubHistories", testCreatorToManyAddOpSubHistories)
+	t.Run("AccountToSubs", testAccountToManyAddOpSubs)
+	t.Run("AccountToSubHistories", testAccountToManyAddOpSubHistories)
+	t.Run("TguserToUserAccounts", testTguserToManyAddOpUserAccounts)
 	t.Run("TguserToUserSubs", testTguserToManyAddOpUserSubs)
 	t.Run("TguserToUserSubHistories", testTguserToManyAddOpUserSubHistories)
 }
 
 // TestToManySet tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToManySet(t *testing.T) {}
+func TestToManySet(t *testing.T) {
+	t.Run("TguserToUserAccounts", testTguserToManySetOpUserAccounts)
+}
 
 // TestToManyRemove tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToManyRemove(t *testing.T) {}
+func TestToManyRemove(t *testing.T) {
+	t.Run("TguserToUserAccounts", testTguserToManyRemoveOpUserAccounts)
+}
 
 func TestReload(t *testing.T) {
-	t.Run("Creators", testCreatorsReload)
+	t.Run("Accounts", testAccountsReload)
 	t.Run("SchemaMigrations", testSchemaMigrationsReload)
 	t.Run("Subs", testSubsReload)
 	t.Run("SubHistories", testSubHistoriesReload)
@@ -181,7 +191,7 @@ func TestReload(t *testing.T) {
 }
 
 func TestReloadAll(t *testing.T) {
-	t.Run("Creators", testCreatorsReloadAll)
+	t.Run("Accounts", testAccountsReloadAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsReloadAll)
 	t.Run("Subs", testSubsReloadAll)
 	t.Run("SubHistories", testSubHistoriesReloadAll)
@@ -189,7 +199,7 @@ func TestReloadAll(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
-	t.Run("Creators", testCreatorsSelect)
+	t.Run("Accounts", testAccountsSelect)
 	t.Run("SchemaMigrations", testSchemaMigrationsSelect)
 	t.Run("Subs", testSubsSelect)
 	t.Run("SubHistories", testSubHistoriesSelect)
@@ -197,7 +207,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	t.Run("Creators", testCreatorsUpdate)
+	t.Run("Accounts", testAccountsUpdate)
 	t.Run("SchemaMigrations", testSchemaMigrationsUpdate)
 	t.Run("Subs", testSubsUpdate)
 	t.Run("SubHistories", testSubHistoriesUpdate)
@@ -205,7 +215,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestSliceUpdateAll(t *testing.T) {
-	t.Run("Creators", testCreatorsSliceUpdateAll)
+	t.Run("Accounts", testAccountsSliceUpdateAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsSliceUpdateAll)
 	t.Run("Subs", testSubsSliceUpdateAll)
 	t.Run("SubHistories", testSubHistoriesSliceUpdateAll)

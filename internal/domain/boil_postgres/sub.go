@@ -25,7 +25,7 @@ import (
 // Sub is an object representing the database table.
 type Sub struct {
 	UserID      int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	CreatorID   int64     `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
+	AccountID   int64     `boil:"account_id" json:"account_id" toml:"account_id" yaml:"account_id"`
 	ActivatedAt time.Time `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
 	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
@@ -37,14 +37,14 @@ type Sub struct {
 
 var SubColumns = struct {
 	UserID      string
-	CreatorID   string
+	AccountID   string
 	ActivatedAt string
 	ExpiresAt   string
 	Status      string
 	Price       string
 }{
 	UserID:      "user_id",
-	CreatorID:   "creator_id",
+	AccountID:   "account_id",
 	ActivatedAt: "activated_at",
 	ExpiresAt:   "expires_at",
 	Status:      "status",
@@ -53,14 +53,14 @@ var SubColumns = struct {
 
 var SubTableColumns = struct {
 	UserID      string
-	CreatorID   string
+	AccountID   string
 	ActivatedAt string
 	ExpiresAt   string
 	Status      string
 	Price       string
 }{
 	UserID:      "sub.user_id",
-	CreatorID:   "sub.creator_id",
+	AccountID:   "sub.account_id",
 	ActivatedAt: "sub.activated_at",
 	ExpiresAt:   "sub.expires_at",
 	Status:      "sub.status",
@@ -165,14 +165,14 @@ func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNo
 
 var SubWhere = struct {
 	UserID      whereHelperint64
-	CreatorID   whereHelperint64
+	AccountID   whereHelperint64
 	ActivatedAt whereHelpertime_Time
 	ExpiresAt   whereHelpertime_Time
 	Status      whereHelperSubStatus
 	Price       whereHelpernull_Int
 }{
 	UserID:      whereHelperint64{field: "\"sub\".\"user_id\""},
-	CreatorID:   whereHelperint64{field: "\"sub\".\"creator_id\""},
+	AccountID:   whereHelperint64{field: "\"sub\".\"account_id\""},
 	ActivatedAt: whereHelpertime_Time{field: "\"sub\".\"activated_at\""},
 	ExpiresAt:   whereHelpertime_Time{field: "\"sub\".\"expires_at\""},
 	Status:      whereHelperSubStatus{field: "\"sub\".\"status\""},
@@ -181,16 +181,16 @@ var SubWhere = struct {
 
 // SubRels is where relationship names are stored.
 var SubRels = struct {
-	Creator string
+	Account string
 	User    string
 }{
-	Creator: "Creator",
+	Account: "Account",
 	User:    "User",
 }
 
 // subR is where relationships are stored.
 type subR struct {
-	Creator *Creator `boil:"Creator" json:"Creator" toml:"Creator" yaml:"Creator"`
+	Account *Account `boil:"Account" json:"Account" toml:"Account" yaml:"Account"`
 	User    *Tguser  `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
@@ -199,11 +199,11 @@ func (*subR) NewStruct() *subR {
 	return &subR{}
 }
 
-func (r *subR) GetCreator() *Creator {
+func (r *subR) GetAccount() *Account {
 	if r == nil {
 		return nil
 	}
-	return r.Creator
+	return r.Account
 }
 
 func (r *subR) GetUser() *Tguser {
@@ -217,10 +217,10 @@ func (r *subR) GetUser() *Tguser {
 type subL struct{}
 
 var (
-	subAllColumns            = []string{"user_id", "creator_id", "activated_at", "expires_at", "status", "price"}
-	subColumnsWithoutDefault = []string{"user_id", "creator_id"}
+	subAllColumns            = []string{"user_id", "account_id", "activated_at", "expires_at", "status", "price"}
+	subColumnsWithoutDefault = []string{"user_id", "account_id"}
 	subColumnsWithDefault    = []string{"activated_at", "expires_at", "status", "price"}
-	subPrimaryKeyColumns     = []string{"user_id", "creator_id"}
+	subPrimaryKeyColumns     = []string{"user_id", "account_id"}
 	subGeneratedColumns      = []string{}
 )
 
@@ -522,15 +522,15 @@ func (q subQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, 
 	return count > 0, nil
 }
 
-// Creator pointed to by the foreign key.
-func (o *Sub) Creator(mods ...qm.QueryMod) creatorQuery {
+// Account pointed to by the foreign key.
+func (o *Sub) Account(mods ...qm.QueryMod) accountQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"creator_id\" = ?", o.CreatorID),
+		qm.Where("\"account_id\" = ?", o.AccountID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	return Creators(queryMods...)
+	return Accounts(queryMods...)
 }
 
 // User pointed to by the foreign key.
@@ -544,9 +544,9 @@ func (o *Sub) User(mods ...qm.QueryMod) tguserQuery {
 	return Tgusers(queryMods...)
 }
 
-// LoadCreator allows an eager lookup of values, cached into the
+// LoadAccount allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSub interface{}, mods queries.Applicator) error {
+func (subL) LoadAccount(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSub interface{}, mods queries.Applicator) error {
 	var slice []*Sub
 	var object *Sub
 
@@ -577,7 +577,7 @@ func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bo
 		if object.R == nil {
 			object.R = &subR{}
 		}
-		args = append(args, object.CreatorID)
+		args = append(args, object.AccountID)
 
 	} else {
 	Outer:
@@ -587,12 +587,12 @@ func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bo
 			}
 
 			for _, a := range args {
-				if a == obj.CreatorID {
+				if a == obj.AccountID {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.CreatorID)
+			args = append(args, obj.AccountID)
 
 		}
 	}
@@ -602,8 +602,8 @@ func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bo
 	}
 
 	query := NewQuery(
-		qm.From(`creator`),
-		qm.WhereIn(`creator.creator_id in ?`, args...),
+		qm.From(`account`),
+		qm.WhereIn(`account.account_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -611,19 +611,19 @@ func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bo
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load Creator")
+		return errors.Wrap(err, "failed to eager load Account")
 	}
 
-	var resultSlice []*Creator
+	var resultSlice []*Account
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Creator")
+		return errors.Wrap(err, "failed to bind eager loaded slice Account")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for creator")
+		return errors.Wrap(err, "failed to close results of eager load for account")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for creator")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for account")
 	}
 
 	if len(subAfterSelectHooks) != 0 {
@@ -640,9 +640,9 @@ func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bo
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.Creator = foreign
+		object.R.Account = foreign
 		if foreign.R == nil {
-			foreign.R = &creatorR{}
+			foreign.R = &accountR{}
 		}
 		foreign.R.Subs = append(foreign.R.Subs, object)
 		return nil
@@ -650,10 +650,10 @@ func (subL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bo
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.CreatorID == foreign.CreatorID {
-				local.R.Creator = foreign
+			if local.AccountID == foreign.AccountID {
+				local.R.Account = foreign
 				if foreign.R == nil {
-					foreign.R = &creatorR{}
+					foreign.R = &accountR{}
 				}
 				foreign.R.Subs = append(foreign.R.Subs, local)
 				break
@@ -784,18 +784,18 @@ func (subL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool,
 	return nil
 }
 
-// SetCreatorG of the sub to the related item.
-// Sets o.R.Creator to related.
+// SetAccountG of the sub to the related item.
+// Sets o.R.Account to related.
 // Adds o to related.R.Subs.
 // Uses the global database handle.
-func (o *Sub) SetCreatorG(ctx context.Context, insert bool, related *Creator) error {
-	return o.SetCreator(ctx, boil.GetContextDB(), insert, related)
+func (o *Sub) SetAccountG(ctx context.Context, insert bool, related *Account) error {
+	return o.SetAccount(ctx, boil.GetContextDB(), insert, related)
 }
 
-// SetCreator of the sub to the related item.
-// Sets o.R.Creator to related.
+// SetAccount of the sub to the related item.
+// Sets o.R.Account to related.
 // Adds o to related.R.Subs.
-func (o *Sub) SetCreator(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Creator) error {
+func (o *Sub) SetAccount(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Account) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -805,10 +805,10 @@ func (o *Sub) SetCreator(ctx context.Context, exec boil.ContextExecutor, insert 
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"sub\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"creator_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"account_id"}),
 		strmangle.WhereClause("\"", "\"", 2, subPrimaryKeyColumns),
 	)
-	values := []interface{}{related.CreatorID, o.UserID, o.CreatorID}
+	values := []interface{}{related.AccountID, o.UserID, o.AccountID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -819,17 +819,17 @@ func (o *Sub) SetCreator(ctx context.Context, exec boil.ContextExecutor, insert 
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.CreatorID = related.CreatorID
+	o.AccountID = related.AccountID
 	if o.R == nil {
 		o.R = &subR{
-			Creator: related,
+			Account: related,
 		}
 	} else {
-		o.R.Creator = related
+		o.R.Account = related
 	}
 
 	if related.R == nil {
-		related.R = &creatorR{
+		related.R = &accountR{
 			Subs: SubSlice{o},
 		}
 	} else {
@@ -863,7 +863,7 @@ func (o *Sub) SetUser(ctx context.Context, exec boil.ContextExecutor, insert boo
 		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
 		strmangle.WhereClause("\"", "\"", 2, subPrimaryKeyColumns),
 	)
-	values := []interface{}{related.UserID, o.UserID, o.CreatorID}
+	values := []interface{}{related.UserID, o.UserID, o.AccountID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -906,13 +906,13 @@ func Subs(mods ...qm.QueryMod) subQuery {
 }
 
 // FindSubG retrieves a single record by ID.
-func FindSubG(ctx context.Context, userID int64, creatorID int64, selectCols ...string) (*Sub, error) {
-	return FindSub(ctx, boil.GetContextDB(), userID, creatorID, selectCols...)
+func FindSubG(ctx context.Context, userID int64, accountID int64, selectCols ...string) (*Sub, error) {
+	return FindSub(ctx, boil.GetContextDB(), userID, accountID, selectCols...)
 }
 
 // FindSub retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindSub(ctx context.Context, exec boil.ContextExecutor, userID int64, creatorID int64, selectCols ...string) (*Sub, error) {
+func FindSub(ctx context.Context, exec boil.ContextExecutor, userID int64, accountID int64, selectCols ...string) (*Sub, error) {
 	subObj := &Sub{}
 
 	sel := "*"
@@ -920,10 +920,10 @@ func FindSub(ctx context.Context, exec boil.ContextExecutor, userID int64, creat
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"sub\" where \"user_id\"=$1 AND \"creator_id\"=$2", sel,
+		"select %s from \"sub\" where \"user_id\"=$1 AND \"account_id\"=$2", sel,
 	)
 
-	q := queries.Raw(query, userID, creatorID)
+	q := queries.Raw(query, userID, accountID)
 
 	err := q.Bind(ctx, exec, subObj)
 	if err != nil {
@@ -1307,7 +1307,7 @@ func (o *Sub) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, err
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), subPrimaryKeyMapping)
-	sql := "DELETE FROM \"sub\" WHERE \"user_id\"=$1 AND \"creator_id\"=$2"
+	sql := "DELETE FROM \"sub\" WHERE \"user_id\"=$1 AND \"account_id\"=$2"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1422,7 +1422,7 @@ func (o *Sub) ReloadG(ctx context.Context) error {
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Sub) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindSub(ctx, exec, o.UserID, o.CreatorID)
+	ret, err := FindSub(ctx, exec, o.UserID, o.AccountID)
 	if err != nil {
 		return err
 	}
@@ -1471,21 +1471,21 @@ func (o *SubSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) err
 }
 
 // SubExistsG checks if the Sub row exists.
-func SubExistsG(ctx context.Context, userID int64, creatorID int64) (bool, error) {
-	return SubExists(ctx, boil.GetContextDB(), userID, creatorID)
+func SubExistsG(ctx context.Context, userID int64, accountID int64) (bool, error) {
+	return SubExists(ctx, boil.GetContextDB(), userID, accountID)
 }
 
 // SubExists checks if the Sub row exists.
-func SubExists(ctx context.Context, exec boil.ContextExecutor, userID int64, creatorID int64) (bool, error) {
+func SubExists(ctx context.Context, exec boil.ContextExecutor, userID int64, accountID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"sub\" where \"user_id\"=$1 AND \"creator_id\"=$2 limit 1)"
+	sql := "select exists(select 1 from \"sub\" where \"user_id\"=$1 AND \"account_id\"=$2 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, userID, creatorID)
+		fmt.Fprintln(writer, userID, accountID)
 	}
-	row := exec.QueryRowContext(ctx, sql, userID, creatorID)
+	row := exec.QueryRowContext(ctx, sql, userID, accountID)
 
 	err := row.Scan(&exists)
 	if err != nil {

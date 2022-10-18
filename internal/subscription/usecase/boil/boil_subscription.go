@@ -22,9 +22,17 @@ func NewBoilSubscriptionUsecase(db *sql.DB) domain.SubscriptionUsecase {
 	}
 }
 
+func (s *subscriptionUsecaseBoil) GetByID(ctx context.Context, userID int64, creatorID int64) (*domain.Sub, error) {
+	found, err := boilmodels.FindSub(ctx, s.db, userID, creatorID)
+
+	domainSub := &domain.Sub{}
+	domain.SubBoilToDomain(found, domainSub)
+	return domainSub, err
+}
+
 // Create - creates subscribtion
 func (s *subscriptionUsecaseBoil) Create(ctx context.Context, sub *domain.Sub) error {
-	if _, err := boilmodels.FindSub(ctx, s.db, sub.UserID, sub.CreatorID); err != nil {
+	if _, err := boilmodels.FindSub(ctx, s.db, sub.UserID, sub.AccountID); err != nil {
 		if err != sql.ErrNoRows {
 			return err
 		}
@@ -52,7 +60,7 @@ func (s *subscriptionUsecaseBoil) Save(ctx context.Context, sub *domain.Sub) (in
 
 	subhist := boilmodels.SubHistory{
 		UserID:      boilSub.UserID,
-		CreatorID:   boilSub.CreatorID,
+		AccountID:   boilSub.AccountID,
 		ActivatedAt: boilSub.ActivatedAt,
 		ExpiresAt:   boilSub.ExpiresAt,
 		Status:      boilSub.Status,
@@ -64,7 +72,7 @@ func (s *subscriptionUsecaseBoil) Save(ctx context.Context, sub *domain.Sub) (in
 }
 
 func (s *subscriptionUsecaseBoil) Update(ctx context.Context, sub *domain.Sub) error {
-	foundSub, err := boilmodels.FindSub(ctx, s.db, sub.UserID, sub.CreatorID)
+	foundSub, err := boilmodels.FindSub(ctx, s.db, sub.UserID, sub.AccountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("user does not exist")
@@ -86,7 +94,7 @@ func (s *subscriptionUsecaseBoil) Update(ctx context.Context, sub *domain.Sub) e
 
 func (s *subscriptionUsecaseBoil) Delete(ctx context.Context, userID int64, creatorID int64) error {
 	// Delete subscription
-	_, err := boilmodels.Subs(qm.Where("user_id=? and creator_id=?", userID, creatorID)).DeleteAll(ctx, s.db)
+	_, err := boilmodels.Subs(qm.Where("user_id=? and account_id=?", userID, creatorID)).DeleteAll(ctx, s.db)
 	return err
 }
 
@@ -114,8 +122,8 @@ func (s *subscriptionUsecaseBoil) List(ctx context.Context, cond domain.FindSubR
 		conds = append(conds, qm.Where("user_id=?", cond.TgUserID.Eq))
 	}
 
-	if cond.CreatorID != nil {
-		conds = append(conds, qm.Where("creator_id=?", cond.CreatorID.Eq))
+	if cond.AccountID != nil {
+		conds = append(conds, qm.Where("creator_id=?", cond.AccountID.Eq))
 	}
 
 	conds = append(conds, qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize)))

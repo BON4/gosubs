@@ -25,7 +25,7 @@ import (
 // SubHistory is an object representing the database table.
 type SubHistory struct {
 	UserID      int64     `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	CreatorID   int64     `boil:"creator_id" json:"creator_id" toml:"creator_id" yaml:"creator_id"`
+	AccountID   int64     `boil:"account_id" json:"account_id" toml:"account_id" yaml:"account_id"`
 	ActivatedAt time.Time `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
 	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
@@ -38,7 +38,7 @@ type SubHistory struct {
 
 var SubHistoryColumns = struct {
 	UserID      string
-	CreatorID   string
+	AccountID   string
 	ActivatedAt string
 	ExpiresAt   string
 	Status      string
@@ -46,7 +46,7 @@ var SubHistoryColumns = struct {
 	SubHistID   string
 }{
 	UserID:      "user_id",
-	CreatorID:   "creator_id",
+	AccountID:   "account_id",
 	ActivatedAt: "activated_at",
 	ExpiresAt:   "expires_at",
 	Status:      "status",
@@ -56,7 +56,7 @@ var SubHistoryColumns = struct {
 
 var SubHistoryTableColumns = struct {
 	UserID      string
-	CreatorID   string
+	AccountID   string
 	ActivatedAt string
 	ExpiresAt   string
 	Status      string
@@ -64,7 +64,7 @@ var SubHistoryTableColumns = struct {
 	SubHistID   string
 }{
 	UserID:      "sub_history.user_id",
-	CreatorID:   "sub_history.creator_id",
+	AccountID:   "sub_history.account_id",
 	ActivatedAt: "sub_history.activated_at",
 	ExpiresAt:   "sub_history.expires_at",
 	Status:      "sub_history.status",
@@ -76,7 +76,7 @@ var SubHistoryTableColumns = struct {
 
 var SubHistoryWhere = struct {
 	UserID      whereHelperint64
-	CreatorID   whereHelperint64
+	AccountID   whereHelperint64
 	ActivatedAt whereHelpertime_Time
 	ExpiresAt   whereHelpertime_Time
 	Status      whereHelperSubStatus
@@ -84,7 +84,7 @@ var SubHistoryWhere = struct {
 	SubHistID   whereHelperint64
 }{
 	UserID:      whereHelperint64{field: "\"sub_history\".\"user_id\""},
-	CreatorID:   whereHelperint64{field: "\"sub_history\".\"creator_id\""},
+	AccountID:   whereHelperint64{field: "\"sub_history\".\"account_id\""},
 	ActivatedAt: whereHelpertime_Time{field: "\"sub_history\".\"activated_at\""},
 	ExpiresAt:   whereHelpertime_Time{field: "\"sub_history\".\"expires_at\""},
 	Status:      whereHelperSubStatus{field: "\"sub_history\".\"status\""},
@@ -94,16 +94,16 @@ var SubHistoryWhere = struct {
 
 // SubHistoryRels is where relationship names are stored.
 var SubHistoryRels = struct {
-	Creator string
+	Account string
 	User    string
 }{
-	Creator: "Creator",
+	Account: "Account",
 	User:    "User",
 }
 
 // subHistoryR is where relationships are stored.
 type subHistoryR struct {
-	Creator *Creator `boil:"Creator" json:"Creator" toml:"Creator" yaml:"Creator"`
+	Account *Account `boil:"Account" json:"Account" toml:"Account" yaml:"Account"`
 	User    *Tguser  `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
@@ -112,11 +112,11 @@ func (*subHistoryR) NewStruct() *subHistoryR {
 	return &subHistoryR{}
 }
 
-func (r *subHistoryR) GetCreator() *Creator {
+func (r *subHistoryR) GetAccount() *Account {
 	if r == nil {
 		return nil
 	}
-	return r.Creator
+	return r.Account
 }
 
 func (r *subHistoryR) GetUser() *Tguser {
@@ -130,8 +130,8 @@ func (r *subHistoryR) GetUser() *Tguser {
 type subHistoryL struct{}
 
 var (
-	subHistoryAllColumns            = []string{"user_id", "creator_id", "activated_at", "expires_at", "status", "price", "sub_hist_id"}
-	subHistoryColumnsWithoutDefault = []string{"user_id", "creator_id"}
+	subHistoryAllColumns            = []string{"user_id", "account_id", "activated_at", "expires_at", "status", "price", "sub_hist_id"}
+	subHistoryColumnsWithoutDefault = []string{"user_id", "account_id"}
 	subHistoryColumnsWithDefault    = []string{"activated_at", "expires_at", "status", "price", "sub_hist_id"}
 	subHistoryPrimaryKeyColumns     = []string{"sub_hist_id"}
 	subHistoryGeneratedColumns      = []string{}
@@ -435,15 +435,15 @@ func (q subHistoryQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 	return count > 0, nil
 }
 
-// Creator pointed to by the foreign key.
-func (o *SubHistory) Creator(mods ...qm.QueryMod) creatorQuery {
+// Account pointed to by the foreign key.
+func (o *SubHistory) Account(mods ...qm.QueryMod) accountQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"creator_id\" = ?", o.CreatorID),
+		qm.Where("\"account_id\" = ?", o.AccountID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	return Creators(queryMods...)
+	return Accounts(queryMods...)
 }
 
 // User pointed to by the foreign key.
@@ -457,9 +457,9 @@ func (o *SubHistory) User(mods ...qm.QueryMod) tguserQuery {
 	return Tgusers(queryMods...)
 }
 
-// LoadCreator allows an eager lookup of values, cached into the
+// LoadAccount allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSubHistory interface{}, mods queries.Applicator) error {
+func (subHistoryL) LoadAccount(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSubHistory interface{}, mods queries.Applicator) error {
 	var slice []*SubHistory
 	var object *SubHistory
 
@@ -490,7 +490,7 @@ func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, sing
 		if object.R == nil {
 			object.R = &subHistoryR{}
 		}
-		args = append(args, object.CreatorID)
+		args = append(args, object.AccountID)
 
 	} else {
 	Outer:
@@ -500,12 +500,12 @@ func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, sing
 			}
 
 			for _, a := range args {
-				if a == obj.CreatorID {
+				if a == obj.AccountID {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.CreatorID)
+			args = append(args, obj.AccountID)
 
 		}
 	}
@@ -515,8 +515,8 @@ func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, sing
 	}
 
 	query := NewQuery(
-		qm.From(`creator`),
-		qm.WhereIn(`creator.creator_id in ?`, args...),
+		qm.From(`account`),
+		qm.WhereIn(`account.account_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -524,19 +524,19 @@ func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, sing
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load Creator")
+		return errors.Wrap(err, "failed to eager load Account")
 	}
 
-	var resultSlice []*Creator
+	var resultSlice []*Account
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Creator")
+		return errors.Wrap(err, "failed to bind eager loaded slice Account")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for creator")
+		return errors.Wrap(err, "failed to close results of eager load for account")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for creator")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for account")
 	}
 
 	if len(subHistoryAfterSelectHooks) != 0 {
@@ -553,9 +553,9 @@ func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, sing
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.Creator = foreign
+		object.R.Account = foreign
 		if foreign.R == nil {
-			foreign.R = &creatorR{}
+			foreign.R = &accountR{}
 		}
 		foreign.R.SubHistories = append(foreign.R.SubHistories, object)
 		return nil
@@ -563,10 +563,10 @@ func (subHistoryL) LoadCreator(ctx context.Context, e boil.ContextExecutor, sing
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.CreatorID == foreign.CreatorID {
-				local.R.Creator = foreign
+			if local.AccountID == foreign.AccountID {
+				local.R.Account = foreign
 				if foreign.R == nil {
-					foreign.R = &creatorR{}
+					foreign.R = &accountR{}
 				}
 				foreign.R.SubHistories = append(foreign.R.SubHistories, local)
 				break
@@ -697,18 +697,18 @@ func (subHistoryL) LoadUser(ctx context.Context, e boil.ContextExecutor, singula
 	return nil
 }
 
-// SetCreatorG of the subHistory to the related item.
-// Sets o.R.Creator to related.
+// SetAccountG of the subHistory to the related item.
+// Sets o.R.Account to related.
 // Adds o to related.R.SubHistories.
 // Uses the global database handle.
-func (o *SubHistory) SetCreatorG(ctx context.Context, insert bool, related *Creator) error {
-	return o.SetCreator(ctx, boil.GetContextDB(), insert, related)
+func (o *SubHistory) SetAccountG(ctx context.Context, insert bool, related *Account) error {
+	return o.SetAccount(ctx, boil.GetContextDB(), insert, related)
 }
 
-// SetCreator of the subHistory to the related item.
-// Sets o.R.Creator to related.
+// SetAccount of the subHistory to the related item.
+// Sets o.R.Account to related.
 // Adds o to related.R.SubHistories.
-func (o *SubHistory) SetCreator(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Creator) error {
+func (o *SubHistory) SetAccount(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Account) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -718,10 +718,10 @@ func (o *SubHistory) SetCreator(ctx context.Context, exec boil.ContextExecutor, 
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"sub_history\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"creator_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"account_id"}),
 		strmangle.WhereClause("\"", "\"", 2, subHistoryPrimaryKeyColumns),
 	)
-	values := []interface{}{related.CreatorID, o.SubHistID}
+	values := []interface{}{related.AccountID, o.SubHistID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -732,17 +732,17 @@ func (o *SubHistory) SetCreator(ctx context.Context, exec boil.ContextExecutor, 
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.CreatorID = related.CreatorID
+	o.AccountID = related.AccountID
 	if o.R == nil {
 		o.R = &subHistoryR{
-			Creator: related,
+			Account: related,
 		}
 	} else {
-		o.R.Creator = related
+		o.R.Account = related
 	}
 
 	if related.R == nil {
-		related.R = &creatorR{
+		related.R = &accountR{
 			SubHistories: SubHistorySlice{o},
 		}
 	} else {

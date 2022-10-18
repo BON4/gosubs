@@ -9,7 +9,7 @@ import (
 	"github.com/BON4/gosubs/internal/domain"
 	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
 
-	creator_usecase "github.com/BON4/gosubs/internal/creator/usecase"
+	account_usecase "github.com/BON4/gosubs/internal/account/usecase/boil"
 	sub_usecase "github.com/BON4/gosubs/internal/subscription/usecase/boil"
 	tguser_usecase "github.com/BON4/gosubs/internal/tguser/usecase/boil"
 	"github.com/BON4/gosubs/internal/utis/tests"
@@ -38,17 +38,18 @@ func TestSubCreate(t *testing.T) {
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	crt := tests.RrandomCreatorBoil()
 
 	if err := usr.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
+	crt := tests.RrandomAccountBoil(null.Int64From(usr.UserID))
+
 	if err := crt.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	sub := tests.RandomSubBoil(usr.UserID, crt.CreatorID)
+	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
 	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
@@ -59,7 +60,7 @@ func TestSubCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.CreatorID)
+	_, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.AccountID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,17 +72,18 @@ func TestSubDelete(t *testing.T) {
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	crt := tests.RrandomCreatorBoil()
 
 	if err := usr.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
+	crt := tests.RrandomAccountBoil(null.Int64From(usr.UserID))
+
 	if err := crt.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	sub := tests.RandomSubBoil(usr.UserID, crt.CreatorID)
+	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
 	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
@@ -92,11 +94,11 @@ func TestSubDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := subUc.Delete(ctx, sub.UserID, sub.CreatorID); err != nil {
+	if err := subUc.Delete(ctx, sub.UserID, sub.AccountID); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.CreatorID)
+	_, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.AccountID)
 	if err != sql.ErrNoRows {
 		t.Fatal(err)
 	}
@@ -109,17 +111,18 @@ func TestSubUpdate(t *testing.T) {
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	crt := tests.RrandomCreatorBoil()
 
 	if err := usr.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
+	crt := tests.RrandomAccountBoil(null.Int64From(usr.UserID))
+
 	if err := crt.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	sub := tests.RandomSubBoil(usr.UserID, crt.CreatorID)
+	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
 	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
@@ -141,7 +144,7 @@ func TestSubUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	found, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.CreatorID)
+	found, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.AccountID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,17 +165,17 @@ func TestSubSave(t *testing.T) {
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	crt := tests.RrandomCreatorBoil()
 
 	if err := usr.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
+	crt := tests.RrandomAccountBoil(null.Int64From(usr.UserID))
 
 	if err := crt.Insert(ctx, db, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	sub := tests.RandomSubBoil(usr.UserID, crt.CreatorID)
+	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
 	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
@@ -212,21 +215,21 @@ func BenchmarkSubList(b *testing.B) {
 	ctx := context.TODO()
 
 	uuc := tguser_usecase.NewBoilTgUserUsecase(db)
-	cuc := creator_usecase.NewBoilCretorUsecase(db)
+	cuc := account_usecase.NewBoilAccountUsecase(db)
 	suc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
 	total := b.N
 
 	users := make([]*domain.Tguser, total)
 
-	domainCreator := &domain.Creator{}
-	domain.CreatorBoilToDomain(tests.RrandomCreatorBoil(), domainCreator)
+	domainAccount := &domain.Account{}
+	domain.AccountBoilToDomain(tests.RrandomAccountBoil(null.NewInt64(0, false)), domainAccount)
 
 	subs := make([]*domain.Sub, total)
 
 	b.StartTimer()
 
-	if err := cuc.Create(ctx, domainCreator); err != nil {
+	if err := cuc.Create(ctx, domainAccount); err != nil {
 		panic(err)
 	}
 
@@ -238,7 +241,7 @@ func BenchmarkSubList(b *testing.B) {
 			panic(err)
 		}
 		subs[i] = &domain.Sub{}
-		domain.SubBoilToDomain(tests.RandomSubBoil(users[i].UserID, domainCreator.CreatorID), subs[i])
+		domain.SubBoilToDomain(tests.RandomSubBoil(users[i].UserID, domainAccount.AccountID), subs[i])
 
 		if err := suc.Create(ctx, subs[i]); err != nil {
 			panic(err)
@@ -281,28 +284,28 @@ func BenchmarkSubList(b *testing.B) {
 	b.StartTimer()
 }
 
-func BenchmarkCreate(b *testing.B) {
+func BenchmarkUpdate(b *testing.B) {
 	b.StopTimer()
 	tests.DeleteAllBoil(db)
 
 	ctx := context.TODO()
 
 	uuc := tguser_usecase.NewBoilTgUserUsecase(db)
-	cuc := creator_usecase.NewBoilCretorUsecase(db)
+	cuc := account_usecase.NewBoilAccountUsecase(db)
 	suc := sub_usecase.NewBoilSubscriptionUsecase(db)
 
 	total := b.N
 
 	users := make([]*domain.Tguser, total)
 
-	domainCreator := &domain.Creator{}
-	domain.CreatorBoilToDomain(tests.RrandomCreatorBoil(), domainCreator)
+	domainAccount := &domain.Account{}
+	domain.AccountBoilToDomain(tests.RrandomAccountBoil(null.NewInt64(0, false)), domainAccount)
 
 	subs := make([]*domain.Sub, total)
 
 	b.StartTimer()
 
-	if err := cuc.Create(ctx, domainCreator); err != nil {
+	if err := cuc.Create(ctx, domainAccount); err != nil {
 		panic(err)
 	}
 
@@ -314,7 +317,7 @@ func BenchmarkCreate(b *testing.B) {
 			panic(err)
 		}
 		subs[i] = &domain.Sub{}
-		domain.SubBoilToDomain(tests.RandomSubBoil(users[i].UserID, domainCreator.CreatorID), subs[i])
+		domain.SubBoilToDomain(tests.RandomSubBoil(users[i].UserID, domainAccount.AccountID), subs[i])
 
 		if err := suc.Create(ctx, subs[i]); err != nil {
 			panic(err)
@@ -322,7 +325,7 @@ func BenchmarkCreate(b *testing.B) {
 	}
 
 	for _, sub := range subs {
-		temp := tests.RandomSubBoil(sub.UserID, sub.CreatorID)
+		temp := tests.RandomSubBoil(sub.UserID, sub.AccountID)
 		sub.ActivatedAt = temp.ActivatedAt
 		sub.ExpiresAt = temp.ExpiresAt
 		sub.Status = domain.SubStatus(temp.Status)

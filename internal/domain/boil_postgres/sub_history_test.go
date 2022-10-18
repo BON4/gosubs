@@ -494,53 +494,53 @@ func testSubHistoriesInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testSubHistoryToOneCreatorUsingCreator(t *testing.T) {
+func testSubHistoryToOneAccountUsingAccount(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
 	var local SubHistory
-	var foreign Creator
+	var foreign Account
 
 	seed := randomize.NewSeed()
 	if err := randomize.Struct(seed, &local, subHistoryDBTypes, false, subHistoryColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize SubHistory struct: %s", err)
 	}
-	if err := randomize.Struct(seed, &foreign, creatorDBTypes, false, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err := randomize.Struct(seed, &foreign, accountDBTypes, false, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	local.CreatorID = foreign.CreatorID
+	local.AccountID = foreign.AccountID
 	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.Creator().One(ctx, tx)
+	check, err := local.Account().One(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if check.CreatorID != foreign.CreatorID {
-		t.Errorf("want: %v, got %v", foreign.CreatorID, check.CreatorID)
+	if check.AccountID != foreign.AccountID {
+		t.Errorf("want: %v, got %v", foreign.AccountID, check.AccountID)
 	}
 
 	slice := SubHistorySlice{&local}
-	if err = local.L.LoadCreator(ctx, tx, false, (*[]*SubHistory)(&slice), nil); err != nil {
+	if err = local.L.LoadAccount(ctx, tx, false, (*[]*SubHistory)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.Creator == nil {
+	if local.R.Account == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
-	local.R.Creator = nil
-	if err = local.L.LoadCreator(ctx, tx, true, &local, nil); err != nil {
+	local.R.Account = nil
+	if err = local.L.LoadAccount(ctx, tx, true, &local, nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.Creator == nil {
+	if local.R.Account == nil {
 		t.Error("struct should have been eager loaded")
 	}
 }
@@ -596,7 +596,7 @@ func testSubHistoryToOneTguserUsingUser(t *testing.T) {
 	}
 }
 
-func testSubHistoryToOneSetOpCreatorUsingCreator(t *testing.T) {
+func testSubHistoryToOneSetOpAccountUsingAccount(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -604,16 +604,16 @@ func testSubHistoryToOneSetOpCreatorUsingCreator(t *testing.T) {
 	defer func() { _ = tx.Rollback() }()
 
 	var a SubHistory
-	var b, c Creator
+	var b, c Account
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, subHistoryDBTypes, false, strmangle.SetComplement(subHistoryPrimaryKeyColumns, subHistoryColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &b, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &b, accountDBTypes, false, strmangle.SetComplement(accountPrimaryKeyColumns, accountColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &c, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &c, accountDBTypes, false, strmangle.SetComplement(accountPrimaryKeyColumns, accountColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 
@@ -624,32 +624,32 @@ func testSubHistoryToOneSetOpCreatorUsingCreator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, x := range []*Creator{&b, &c} {
-		err = a.SetCreator(ctx, tx, i != 0, x)
+	for i, x := range []*Account{&b, &c} {
+		err = a.SetAccount(ctx, tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if a.R.Creator != x {
+		if a.R.Account != x {
 			t.Error("relationship struct not set to correct value")
 		}
 
 		if x.R.SubHistories[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
-		if a.CreatorID != x.CreatorID {
-			t.Error("foreign key was wrong value", a.CreatorID)
+		if a.AccountID != x.AccountID {
+			t.Error("foreign key was wrong value", a.AccountID)
 		}
 
-		zero := reflect.Zero(reflect.TypeOf(a.CreatorID))
-		reflect.Indirect(reflect.ValueOf(&a.CreatorID)).Set(zero)
+		zero := reflect.Zero(reflect.TypeOf(a.AccountID))
+		reflect.Indirect(reflect.ValueOf(&a.AccountID)).Set(zero)
 
 		if err = a.Reload(ctx, tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 
-		if a.CreatorID != x.CreatorID {
-			t.Error("foreign key was wrong value", a.CreatorID, x.CreatorID)
+		if a.AccountID != x.AccountID {
+			t.Error("foreign key was wrong value", a.AccountID, x.AccountID)
 		}
 	}
 }
@@ -785,7 +785,7 @@ func testSubHistoriesSelect(t *testing.T) {
 }
 
 var (
-	subHistoryDBTypes = map[string]string{`UserID`: `bigint`, `CreatorID`: `bigint`, `ActivatedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `enum.sub_status('expired','active','cancelled','inactive')`, `Price`: `integer`, `SubHistID`: `bigint`}
+	subHistoryDBTypes = map[string]string{`UserID`: `bigint`, `AccountID`: `bigint`, `ActivatedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `enum.sub_status('expired','active','cancelled','inactive')`, `Price`: `integer`, `SubHistID`: `bigint`}
 	_                 = bytes.MinRead
 )
 

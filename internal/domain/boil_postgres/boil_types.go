@@ -51,6 +51,36 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+type AccountRole string
+
+// Enum values for AccountRole
+const (
+	AccountRoleCreator AccountRole = "creator"
+	AccountRoleAdmin   AccountRole = "admin"
+	AccountRoleBot     AccountRole = "bot"
+)
+
+func AllAccountRole() []AccountRole {
+	return []AccountRole{
+		AccountRoleCreator,
+		AccountRoleAdmin,
+		AccountRoleBot,
+	}
+}
+
+func (e AccountRole) IsValid() error {
+	switch e {
+	case AccountRoleCreator, AccountRoleAdmin, AccountRoleBot:
+		return nil
+	default:
+		return errors.New("enum is not valid")
+	}
+}
+
+func (e AccountRole) String() string {
+	return string(e)
+}
+
 type SubStatus string
 
 // Enum values for SubStatus

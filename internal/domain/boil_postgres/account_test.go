@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testCreators(t *testing.T) {
+func testAccounts(t *testing.T) {
 	t.Parallel()
 
-	query := Creators()
+	query := Accounts()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testCreatorsDelete(t *testing.T) {
+func testAccountsDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testCreatorsDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testCreatorsDelete(t *testing.T) {
 	}
 }
 
-func testCreatorsQueryDeleteAll(t *testing.T) {
+func testAccountsQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testCreatorsQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := Creators().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := Accounts().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testCreatorsQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testCreatorsSliceDeleteAll(t *testing.T) {
+func testAccountsSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testCreatorsSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := CreatorSlice{o}
+	slice := AccountSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testCreatorsSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testCreatorsSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testCreatorsExists(t *testing.T) {
+func testAccountsExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testCreatorsExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := CreatorExists(ctx, tx, o.CreatorID)
+	e, err := AccountExists(ctx, tx, o.AccountID)
 	if err != nil {
-		t.Errorf("Unable to check if Creator exists: %s", err)
+		t.Errorf("Unable to check if Account exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected CreatorExists to return true, but got false.")
+		t.Errorf("Expected AccountExists to return true, but got false.")
 	}
 }
 
-func testCreatorsFind(t *testing.T) {
+func testAccountsFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testCreatorsFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	creatorFound, err := FindCreator(ctx, tx, o.CreatorID)
+	accountFound, err := FindAccount(ctx, tx, o.AccountID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if creatorFound == nil {
+	if accountFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testCreatorsBind(t *testing.T) {
+func testAccountsBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testCreatorsBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = Creators().Bind(ctx, tx, o); err != nil {
+	if err = Accounts().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testCreatorsOne(t *testing.T) {
+func testAccountsOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testCreatorsOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := Creators().One(ctx, tx); err != nil {
+	if x, err := Accounts().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testCreatorsAll(t *testing.T) {
+func testAccountsAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	creatorOne := &Creator{}
-	creatorTwo := &Creator{}
-	if err = randomize.Struct(seed, creatorOne, creatorDBTypes, false, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	accountOne := &Account{}
+	accountTwo := &Account{}
+	if err = randomize.Struct(seed, accountOne, accountDBTypes, false, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
-	if err = randomize.Struct(seed, creatorTwo, creatorDBTypes, false, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, accountTwo, accountDBTypes, false, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = creatorOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = accountOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = creatorTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = accountTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := Creators().All(ctx, tx)
+	slice, err := Accounts().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testCreatorsAll(t *testing.T) {
 	}
 }
 
-func testCreatorsCount(t *testing.T) {
+func testAccountsCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	creatorOne := &Creator{}
-	creatorTwo := &Creator{}
-	if err = randomize.Struct(seed, creatorOne, creatorDBTypes, false, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	accountOne := &Account{}
+	accountTwo := &Account{}
+	if err = randomize.Struct(seed, accountOne, accountDBTypes, false, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
-	if err = randomize.Struct(seed, creatorTwo, creatorDBTypes, false, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, accountTwo, accountDBTypes, false, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = creatorOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = accountOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = creatorTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = accountTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,155 +299,155 @@ func testCreatorsCount(t *testing.T) {
 	}
 }
 
-func creatorBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func creatorAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Creator) error {
-	*o = Creator{}
+func accountAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Account) error {
+	*o = Account{}
 	return nil
 }
 
-func testCreatorsHooks(t *testing.T) {
+func testAccountsHooks(t *testing.T) {
 	t.Parallel()
 
 	var err error
 
 	ctx := context.Background()
-	empty := &Creator{}
-	o := &Creator{}
+	empty := &Account{}
+	o := &Account{}
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, creatorDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize Creator object: %s", err)
+	if err = randomize.Struct(seed, o, accountDBTypes, false); err != nil {
+		t.Errorf("Unable to randomize Account object: %s", err)
 	}
 
-	AddCreatorHook(boil.BeforeInsertHook, creatorBeforeInsertHook)
+	AddAccountHook(boil.BeforeInsertHook, accountBeforeInsertHook)
 	if err = o.doBeforeInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
 	}
-	creatorBeforeInsertHooks = []CreatorHook{}
+	accountBeforeInsertHooks = []AccountHook{}
 
-	AddCreatorHook(boil.AfterInsertHook, creatorAfterInsertHook)
+	AddAccountHook(boil.AfterInsertHook, accountAfterInsertHook)
 	if err = o.doAfterInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
 	}
-	creatorAfterInsertHooks = []CreatorHook{}
+	accountAfterInsertHooks = []AccountHook{}
 
-	AddCreatorHook(boil.AfterSelectHook, creatorAfterSelectHook)
+	AddAccountHook(boil.AfterSelectHook, accountAfterSelectHook)
 	if err = o.doAfterSelectHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
 	}
-	creatorAfterSelectHooks = []CreatorHook{}
+	accountAfterSelectHooks = []AccountHook{}
 
-	AddCreatorHook(boil.BeforeUpdateHook, creatorBeforeUpdateHook)
+	AddAccountHook(boil.BeforeUpdateHook, accountBeforeUpdateHook)
 	if err = o.doBeforeUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
 	}
-	creatorBeforeUpdateHooks = []CreatorHook{}
+	accountBeforeUpdateHooks = []AccountHook{}
 
-	AddCreatorHook(boil.AfterUpdateHook, creatorAfterUpdateHook)
+	AddAccountHook(boil.AfterUpdateHook, accountAfterUpdateHook)
 	if err = o.doAfterUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
 	}
-	creatorAfterUpdateHooks = []CreatorHook{}
+	accountAfterUpdateHooks = []AccountHook{}
 
-	AddCreatorHook(boil.BeforeDeleteHook, creatorBeforeDeleteHook)
+	AddAccountHook(boil.BeforeDeleteHook, accountBeforeDeleteHook)
 	if err = o.doBeforeDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
 	}
-	creatorBeforeDeleteHooks = []CreatorHook{}
+	accountBeforeDeleteHooks = []AccountHook{}
 
-	AddCreatorHook(boil.AfterDeleteHook, creatorAfterDeleteHook)
+	AddAccountHook(boil.AfterDeleteHook, accountAfterDeleteHook)
 	if err = o.doAfterDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
 	}
-	creatorAfterDeleteHooks = []CreatorHook{}
+	accountAfterDeleteHooks = []AccountHook{}
 
-	AddCreatorHook(boil.BeforeUpsertHook, creatorBeforeUpsertHook)
+	AddAccountHook(boil.BeforeUpsertHook, accountBeforeUpsertHook)
 	if err = o.doBeforeUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
 	}
-	creatorBeforeUpsertHooks = []CreatorHook{}
+	accountBeforeUpsertHooks = []AccountHook{}
 
-	AddCreatorHook(boil.AfterUpsertHook, creatorAfterUpsertHook)
+	AddAccountHook(boil.AfterUpsertHook, accountAfterUpsertHook)
 	if err = o.doAfterUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
 	}
-	creatorAfterUpsertHooks = []CreatorHook{}
+	accountAfterUpsertHooks = []AccountHook{}
 }
 
-func testCreatorsInsert(t *testing.T) {
+func testAccountsInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -457,7 +457,7 @@ func testCreatorsInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,24 +467,24 @@ func testCreatorsInsert(t *testing.T) {
 	}
 }
 
-func testCreatorsInsertWhitelist(t *testing.T) {
+func testAccountsInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(creatorColumnsWithoutDefault...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(accountColumnsWithoutDefault...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,18 +494,18 @@ func testCreatorsInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testCreatorToManySubs(t *testing.T) {
+func testAccountToManySubs(t *testing.T) {
 	var err error
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a Creator
+	var a Account
 	var b, c Sub
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, &a, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
@@ -519,8 +519,8 @@ func testCreatorToManySubs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b.CreatorID = a.CreatorID
-	c.CreatorID = a.CreatorID
+	b.AccountID = a.AccountID
+	c.AccountID = a.AccountID
 
 	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
@@ -536,10 +536,10 @@ func testCreatorToManySubs(t *testing.T) {
 
 	bFound, cFound := false, false
 	for _, v := range check {
-		if v.CreatorID == b.CreatorID {
+		if v.AccountID == b.AccountID {
 			bFound = true
 		}
-		if v.CreatorID == c.CreatorID {
+		if v.AccountID == c.AccountID {
 			cFound = true
 		}
 	}
@@ -551,8 +551,8 @@ func testCreatorToManySubs(t *testing.T) {
 		t.Error("expected to find c")
 	}
 
-	slice := CreatorSlice{&a}
-	if err = a.L.LoadSubs(ctx, tx, false, (*[]*Creator)(&slice), nil); err != nil {
+	slice := AccountSlice{&a}
+	if err = a.L.LoadSubs(ctx, tx, false, (*[]*Account)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := len(a.R.Subs); got != 2 {
@@ -572,18 +572,18 @@ func testCreatorToManySubs(t *testing.T) {
 	}
 }
 
-func testCreatorToManySubHistories(t *testing.T) {
+func testAccountToManySubHistories(t *testing.T) {
 	var err error
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a Creator
+	var a Account
 	var b, c SubHistory
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, &a, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
@@ -597,8 +597,8 @@ func testCreatorToManySubHistories(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b.CreatorID = a.CreatorID
-	c.CreatorID = a.CreatorID
+	b.AccountID = a.AccountID
+	c.AccountID = a.AccountID
 
 	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
@@ -614,10 +614,10 @@ func testCreatorToManySubHistories(t *testing.T) {
 
 	bFound, cFound := false, false
 	for _, v := range check {
-		if v.CreatorID == b.CreatorID {
+		if v.AccountID == b.AccountID {
 			bFound = true
 		}
-		if v.CreatorID == c.CreatorID {
+		if v.AccountID == c.AccountID {
 			cFound = true
 		}
 	}
@@ -629,8 +629,8 @@ func testCreatorToManySubHistories(t *testing.T) {
 		t.Error("expected to find c")
 	}
 
-	slice := CreatorSlice{&a}
-	if err = a.L.LoadSubHistories(ctx, tx, false, (*[]*Creator)(&slice), nil); err != nil {
+	slice := AccountSlice{&a}
+	if err = a.L.LoadSubHistories(ctx, tx, false, (*[]*Account)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := len(a.R.SubHistories); got != 2 {
@@ -650,18 +650,18 @@ func testCreatorToManySubHistories(t *testing.T) {
 	}
 }
 
-func testCreatorToManyAddOpSubs(t *testing.T) {
+func testAccountToManyAddOpSubs(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a Creator
+	var a Account
 	var b, c, d, e Sub
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, accountDBTypes, false, strmangle.SetComplement(accountPrimaryKeyColumns, accountColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	foreigners := []*Sub{&b, &c, &d, &e}
@@ -695,17 +695,17 @@ func testCreatorToManyAddOpSubs(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if a.CreatorID != first.CreatorID {
-			t.Error("foreign key was wrong value", a.CreatorID, first.CreatorID)
+		if a.AccountID != first.AccountID {
+			t.Error("foreign key was wrong value", a.AccountID, first.AccountID)
 		}
-		if a.CreatorID != second.CreatorID {
-			t.Error("foreign key was wrong value", a.CreatorID, second.CreatorID)
+		if a.AccountID != second.AccountID {
+			t.Error("foreign key was wrong value", a.AccountID, second.AccountID)
 		}
 
-		if first.R.Creator != &a {
+		if first.R.Account != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
-		if second.R.Creator != &a {
+		if second.R.Account != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
 
@@ -725,18 +725,18 @@ func testCreatorToManyAddOpSubs(t *testing.T) {
 		}
 	}
 }
-func testCreatorToManyAddOpSubHistories(t *testing.T) {
+func testAccountToManyAddOpSubHistories(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a Creator
+	var a Account
 	var b, c, d, e SubHistory
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, creatorDBTypes, false, strmangle.SetComplement(creatorPrimaryKeyColumns, creatorColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, accountDBTypes, false, strmangle.SetComplement(accountPrimaryKeyColumns, accountColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	foreigners := []*SubHistory{&b, &c, &d, &e}
@@ -770,17 +770,17 @@ func testCreatorToManyAddOpSubHistories(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if a.CreatorID != first.CreatorID {
-			t.Error("foreign key was wrong value", a.CreatorID, first.CreatorID)
+		if a.AccountID != first.AccountID {
+			t.Error("foreign key was wrong value", a.AccountID, first.AccountID)
 		}
-		if a.CreatorID != second.CreatorID {
-			t.Error("foreign key was wrong value", a.CreatorID, second.CreatorID)
+		if a.AccountID != second.AccountID {
+			t.Error("foreign key was wrong value", a.AccountID, second.AccountID)
 		}
 
-		if first.R.Creator != &a {
+		if first.R.Account != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
-		if second.R.Creator != &a {
+		if second.R.Account != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
 
@@ -800,15 +800,174 @@ func testCreatorToManyAddOpSubHistories(t *testing.T) {
 		}
 	}
 }
+func testAccountToOneTguserUsingUser(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
 
-func testCreatorsReload(t *testing.T) {
+	var local Account
+	var foreign Tguser
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, tguserDBTypes, false, tguserColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Tguser struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	queries.Assign(&local.UserID, foreign.UserID)
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.User().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !queries.Equal(check.UserID, foreign.UserID) {
+		t.Errorf("want: %v, got %v", foreign.UserID, check.UserID)
+	}
+
+	slice := AccountSlice{&local}
+	if err = local.L.LoadUser(ctx, tx, false, (*[]*Account)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.User = nil
+	if err = local.L.LoadUser(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testAccountToOneSetOpTguserUsingUser(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Account
+	var b, c Tguser
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, accountDBTypes, false, strmangle.SetComplement(accountPrimaryKeyColumns, accountColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, tguserDBTypes, false, strmangle.SetComplement(tguserPrimaryKeyColumns, tguserColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, tguserDBTypes, false, strmangle.SetComplement(tguserPrimaryKeyColumns, tguserColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Tguser{&b, &c} {
+		err = a.SetUser(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.User != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.UserAccounts[0] != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if !queries.Equal(a.UserID, x.UserID) {
+			t.Error("foreign key was wrong value", a.UserID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.UserID))
+		reflect.Indirect(reflect.ValueOf(&a.UserID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if !queries.Equal(a.UserID, x.UserID) {
+			t.Error("foreign key was wrong value", a.UserID, x.UserID)
+		}
+	}
+}
+
+func testAccountToOneRemoveOpTguserUsingUser(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Account
+	var b Tguser
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, accountDBTypes, false, strmangle.SetComplement(accountPrimaryKeyColumns, accountColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, tguserDBTypes, false, strmangle.SetComplement(tguserPrimaryKeyColumns, tguserColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.SetUser(ctx, tx, true, &b); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.RemoveUser(ctx, tx, &b); err != nil {
+		t.Error("failed to remove relationship")
+	}
+
+	count, err := a.User().Count(ctx, tx)
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Error("want no relationships remaining")
+	}
+
+	if a.R.User != nil {
+		t.Error("R struct entry should be nil")
+	}
+
+	if !queries.IsValuerNil(a.UserID) {
+		t.Error("foreign key value should be nil")
+	}
+
+	if len(b.R.UserAccounts) != 0 {
+		t.Error("failed to remove a from b's relationships")
+	}
+}
+
+func testAccountsReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -823,14 +982,14 @@ func testCreatorsReload(t *testing.T) {
 	}
 }
 
-func testCreatorsReloadAll(t *testing.T) {
+func testAccountsReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -840,21 +999,21 @@ func testCreatorsReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := CreatorSlice{o}
+	slice := AccountSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testCreatorsSelect(t *testing.T) {
+func testAccountsSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -864,7 +1023,7 @@ func testCreatorsSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := Creators().All(ctx, tx)
+	slice, err := Accounts().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -875,25 +1034,25 @@ func testCreatorsSelect(t *testing.T) {
 }
 
 var (
-	creatorDBTypes = map[string]string{`CreatorID`: `bigint`, `TelegramID`: `bigint`, `Username`: `text`, `Password`: `bytea`, `Email`: `text`, `ChanName`: `text`}
+	accountDBTypes = map[string]string{`AccountID`: `bigint`, `Password`: `bytea`, `Email`: `text`, `Role`: `enum.account_role('creator','admin','bot')`, `ChanName`: `text`, `UserID`: `bigint`}
 	_              = bytes.MinRead
 )
 
-func testCreatorsUpdate(t *testing.T) {
+func testAccountsUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(creatorPrimaryKeyColumns) {
+	if 0 == len(accountPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(creatorAllColumns) == len(creatorPrimaryKeyColumns) {
+	if len(accountAllColumns) == len(accountPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -903,7 +1062,7 @@ func testCreatorsUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -912,8 +1071,8 @@ func testCreatorsUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -923,18 +1082,18 @@ func testCreatorsUpdate(t *testing.T) {
 	}
 }
 
-func testCreatorsSliceUpdateAll(t *testing.T) {
+func testAccountsSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(creatorAllColumns) == len(creatorPrimaryKeyColumns) {
+	if len(accountAllColumns) == len(accountPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Creator{}
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := &Account{}
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -944,7 +1103,7 @@ func testCreatorsSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -953,18 +1112,18 @@ func testCreatorsSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, creatorDBTypes, true, creatorPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, o, accountDBTypes, true, accountPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(creatorAllColumns, creatorPrimaryKeyColumns) {
-		fields = creatorAllColumns
+	if strmangle.StringSliceMatch(accountAllColumns, accountPrimaryKeyColumns) {
+		fields = accountAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			creatorAllColumns,
-			creatorPrimaryKeyColumns,
+			accountAllColumns,
+			accountPrimaryKeyColumns,
 		)
 	}
 
@@ -982,7 +1141,7 @@ func testCreatorsSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := CreatorSlice{o}
+	slice := AccountSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -990,29 +1149,29 @@ func testCreatorsSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testCreatorsUpsert(t *testing.T) {
+func testAccountsUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(creatorAllColumns) == len(creatorPrimaryKeyColumns) {
+	if len(accountAllColumns) == len(accountPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := Creator{}
-	if err = randomize.Struct(seed, &o, creatorDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	o := Account{}
+	if err = randomize.Struct(seed, &o, accountDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Creator: %s", err)
+		t.Errorf("Unable to upsert Account: %s", err)
 	}
 
-	count, err := Creators().Count(ctx, tx)
+	count, err := Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1021,15 +1180,15 @@ func testCreatorsUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, creatorDBTypes, false, creatorPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Creator struct: %s", err)
+	if err = randomize.Struct(seed, &o, accountDBTypes, false, accountPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize Account struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Creator: %s", err)
+		t.Errorf("Unable to upsert Account: %s", err)
 	}
 
-	count, err = Creators().Count(ctx, tx)
+	count, err = Accounts().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

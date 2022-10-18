@@ -6,7 +6,7 @@ package models
 import "testing"
 
 func TestUpsert(t *testing.T) {
-	t.Run("Creators", testCreatorsUpsert)
+	t.Run("Accounts", testAccountsUpsert)
 
 	t.Run("SchemaMigrations", testSchemaMigrationsUpsert)
 
