@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/BON4/gosubs/config"
+	"github.com/BON4/gosubs/internal/domain"
 	herrors "github.com/BON4/gosubs/internal/errors"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/gin-gonic/gin"
@@ -23,11 +25,11 @@ type ServerMiddleware struct {
 	payloadKey string
 }
 
-func NewServerMiddleware(tgen tokengen.Generator, headerKey string, payloadKey string) *ServerMiddleware {
+func NewServerMiddleware(tgen tokengen.Generator, cfg *config.ServerConfig) *ServerMiddleware {
 	return &ServerMiddleware{
 		tokenMaker: tgen,
-		headerKey:  headerKey,
-		payloadKey: payloadKey,
+		headerKey:  cfg.Auth.HeaderKey,
+		payloadKey: cfg.Auth.PaylaodKey,
 	}
 }
 
@@ -73,6 +75,36 @@ func (m *ServerMiddleware) AuthMiddleware() gin.HandlerFunc {
 		}
 
 		ctx.Set(m.payloadKey, payload)
+		ctx.Next()
+	}
+}
+
+func (m *ServerMiddleware) RoleRestriction(alowedRoles ...domain.AccountRole) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		payload, ok := ctx.Get(m.payloadKey)
+		if !ok {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, herrors.ErrorResponse(errors.New("TODO: custom error 1")))
+			return
+		}
+
+		account, ok := payload.(*tokengen.Payload)
+		if !ok {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, herrors.ErrorResponse(errors.New("TODO: custom error 2")))
+			return
+		}
+
+		var valid = false
+		for _, role := range alowedRoles {
+			if role == account.Instance.Role {
+				valid = true
+			}
+		}
+
+		if !valid {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, herrors.ErrorResponse(errors.New("TODO: custom error 3")))
+			return
+		}
+
 		ctx.Next()
 	}
 }

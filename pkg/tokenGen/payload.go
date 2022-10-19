@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/BON4/gosubs/internal/domain"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -19,7 +20,7 @@ type Payload struct {
 	ID        uuid.UUID `json:"id"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiredAt time.Time `json:"expired_at"`
-	Instance  *domain.Account
+	Instance  domain.Account
 }
 
 // NewPayload creates a new token payload with a specific username and duration
@@ -31,7 +32,7 @@ func NewPayload(account *domain.Account, duration time.Duration) (*Payload, erro
 
 	payload := &Payload{
 		ID:        tokenID,
-		Instance:  account,
+		Instance:  *account,
 		IssuedAt:  time.Now(),
 		ExpiredAt: time.Now().Add(duration),
 	}
@@ -44,4 +45,19 @@ func (payload *Payload) Valid() error {
 		return ErrExpiredToken
 	}
 	return nil
+}
+
+func GetAccountFromContext(ctx *gin.Context, payloadkey string) (*Payload, error) {
+	payload, ok := ctx.Get(payloadkey)
+	if !ok {
+
+		return nil, errors.New("TODO: custom error 1")
+	}
+
+	payloadParsed, ok := payload.(*Payload)
+	if !ok {
+		return nil, errors.New("TODO: custom error 1")
+
+	}
+	return payloadParsed, nil
 }

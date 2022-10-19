@@ -2,136 +2,123 @@ package http
 
 import (
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/BON4/gosubs/internal/domain"
-	"github.com/BON4/gosubs/internal/errors"
+	herrors "github.com/BON4/gosubs/internal/errors"
+
 	"github.com/BON4/gosubs/internal/server"
-	"github.com/BON4/gosubs/internal/utis/tests"
+	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/gin-gonic/gin"
 )
 
 type accountHandler struct {
-	userUc domain.AccountUsecase
-	srv    *server.Server
+	accountUc domain.AccountUsecase
+	srv       *server.Server
 }
 
 func NewAccountHandler(g *gin.RouterGroup, uc domain.AccountUsecase, srv *server.Server) {
 	handler := &accountHandler{
-		userUc: uc,
-		srv:    srv,
+		accountUc: uc,
+		srv:       srv,
 	}
 
-	g.POST("/register", handler.Register)
+	g.GET("/list", srv.MidWar.RoleRestriction(domain.AccountRoleAdmin), handler.ListAccounts)
+
+	g.GET("/:acc_id", handler.GetAccount)
+	g.PATCH("/email", handler.UpdateEmail)
+	g.DELETE("/:acc_id", srv.MidWar.RoleRestriction(domain.AccountRoleAdmin), handler.DeleteAccount)
+
 }
 
-type RegisterAccountRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+func (t *accountHandler) GetAccount(ctx *gin.Context) {
+	payload, err := tokengen.GetAccountFromContext(ctx, t.srv.Cfg.Auth.PaylaodKey)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		return
+	}
+	req_acc_id, err := strconv.ParseInt(ctx.Query("acc_id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	if payload.Instance.Role != domain.AccountRoleAdmin {
+		if req_acc_id != payload.Instance.AccountID {
+			ctx.Status(http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	acc, err := t.accountUc.GetByID(ctx.Request.Context(), req_acc_id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, acc)
 }
 
-func (t *accountHandler) Register(ctx *gin.Context) {
-	req := RegisterAccountRequest{}
+func (t *accountHandler) DeleteAccount(ctx *gin.Context) {
+	acc_id, err := strconv.ParseInt(ctx.Query("acc_id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	if err := t.accountUc.Delete(ctx.Request.Context(), int64(acc_id)); err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+func (t *accountHandler) ListAccounts(ctx *gin.Context) {
+	req := domain.FindAccountRequest{}
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	domainAccount := domain.Account{
-		Role:  domain.AccountRoleCreator,
-		Email: req.Email,
-
-		//TODO hash password
-		Password: []byte(req.Password),
-	}
-
-	if err := t.userUc.Create(ctx.Request.Context(), &domainAccount); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+	accounts, err := t.accountUc.List(ctx.Request.Context(), req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{})
+	ctx.JSON(http.StatusOK, accounts)
 }
 
-type loginAccountRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type updateAccountEmailRequest struct {
+	Email string `json:"email"`
 }
 
-type accountResponse struct {
-	AccountID int64              `json:"account_id"`
-	Email     string             `json:"email"`
-	Role      domain.AccountRole `json:"role"`
-}
-
-type loginAccountResponse struct {
-	AccessToken           string          `json:"access_token"`
-	AccessTokenExpiresAt  time.Time       `json:"access_token_expires_at"`
-	RefreshToken          string          `json:"refresh_token"`
-	RefreshTokenExpiresAt time.Time       `json:"refresh_token_expires_at"`
-	Account               accountResponse `json:"account"`
-}
-
-func (t *accountHandler) Login(ctx *gin.Context) {
-	var req loginAccountRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errors.ErrorResponse(err))
-		return
-	}
-
-	account, err := t.userUc.GetByEmail(ctx.Request.Context(), req.Email)
+func (t *accountHandler) UpdateEmail(ctx *gin.Context) {
+	payload, err := tokengen.GetAccountFromContext(ctx, t.srv.Cfg.Auth.PaylaodKey)
 	if err != nil {
-		//TODO if sql.ErrNoRows throw custom error
-		ctx.JSON(http.StatusBadRequest, errors.ErrorResponse(err))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
 	}
 
-	err = tests.CheckPassword(req.Password, account.Password)
+	req := updateAccountEmailRequest{}
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	acc, err := t.accountUc.GetByID(ctx.Request.Context(), payload.Instance.AccountID)
 	if err != nil {
-		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusUnauthorized, errors.ErrorResponse(err))
+		ctx.JSON(http.StatusNotFound, herrors.ErrorResponse(err))
 		return
 	}
 
-	acessToken, acessPayload, err := t.srv.Token.CreateToken(account, t.srv.Cfg.Token.AcessDuration)
+	acc.Email = req.Email
 
-	if err != nil {
-		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusInternalServerError, errors.ErrorResponse(err))
+	if err := t.accountUc.Update(ctx.Request.Context(), acc); err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
 		return
 	}
 
-	refreshToken, refreshPayload, err := t.srv.Token.CreateToken(account, t.srv.Cfg.Token.RefreshDuration)
-	if err != nil {
-		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusInternalServerError, errors.ErrorResponse(err))
-		return
-	}
-
-	if err := t.srv.Store.Set(ctx.Request.Context(), refreshPayload.ID.String(), &domain.Session{
-		ID:           refreshPayload.ID,
-		Instance:     *account,
-		RefreshToken: refreshToken,
-		UserAgent:    ctx.Request.UserAgent(),
-		ClientIP:     ctx.ClientIP(),
-		IsBlocked:    false,
-		ExpiresAt:    refreshPayload.ExpiredAt,
-	}, t.srv.Cfg.Token.RefreshDuration); err != nil {
-		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusInternalServerError, errors.ErrorResponse(err))
-		return
-	}
-
-	resp := loginAccountResponse{
-		AccessToken:           acessToken,
-		AccessTokenExpiresAt:  acessPayload.ExpiredAt,
-		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: refreshPayload.ExpiredAt,
-		Account: accountResponse{
-			AccountID: account.AccountID,
-			Email:     account.Email,
-			Role:      account.Role,
-		},
-	}
-	ctx.JSON(http.StatusOK, resp)
+	ctx.Status(http.StatusAccepted)
 }

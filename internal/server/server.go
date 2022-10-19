@@ -4,7 +4,9 @@ import (
 	"context"
 	"os"
 
+	"github.com/BON4/gosubs/config"
 	"github.com/BON4/gosubs/internal/domain"
+	"github.com/BON4/gosubs/internal/middleware"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/BON4/timedQ/pkg/ttlstore"
 	"github.com/gin-gonic/gin"
@@ -41,15 +43,16 @@ func setUpLogger(fileName string) (*logrus.Logger, error) {
 type Server struct {
 	g      *gin.Engine
 	Logger *logrus.Logger
-	Cfg    ServerConfig
+	Cfg    config.ServerConfig
 	Token  tokengen.Generator
 	Store  *ttlstore.MapStore[string, *domain.Session]
+	MidWar *middleware.ServerMiddleware
 }
 
 func NewServer(configPath string) (*Server, error) {
 	g := gin.Default()
 
-	cfg, err := LoadServerConfig(configPath)
+	cfg, err := config.LoadServerConfig(configPath)
 	if err != nil {
 		return nil, err
 	}
