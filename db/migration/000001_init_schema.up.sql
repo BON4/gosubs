@@ -24,7 +24,6 @@ CREATE TABLE Account (
 ALTER TABLE Account
 	ADD FOREIGN KEY (user_id) REFERENCES TgUser (user_id);
 
-
 CREATE TABLE Sub (
 	user_id bigint not null,
   	account_id bigint not null,

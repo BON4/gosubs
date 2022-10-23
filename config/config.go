@@ -24,6 +24,8 @@ type ServerConfig struct {
 		PaylaodKey string `yaml:"payload_key"`
 	} `yaml:"auth"`
 
+	DBconn string `yaml:"db_conn"`
+
 	ttlstore.TTLStoreConfig `yaml:"store"`
 }
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/BON4/gosubs/internal/domain"
-	"github.com/volatiletech/null/v8"
+	null "github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	account_usecase "github.com/BON4/gosubs/internal/account/usecase/boil"

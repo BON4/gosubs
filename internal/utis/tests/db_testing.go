@@ -9,7 +9,7 @@ import (
 	"time"
 
 	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
-	"github.com/volatiletech/null/v8"
+	null "github.com/volatiletech/null/v8"
 )
 
 func ConnectTestDB() (*sql.DB, error) {

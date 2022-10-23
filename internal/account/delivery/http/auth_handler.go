@@ -4,33 +4,56 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BON4/gosubs/config"
 	"github.com/BON4/gosubs/internal/domain"
 	herrors "github.com/BON4/gosubs/internal/errors"
-	"github.com/BON4/gosubs/internal/server"
+	"github.com/BON4/gosubs/internal/middleware"
 	"github.com/BON4/gosubs/internal/utis/tests"
+	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
+	"github.com/BON4/timedQ/pkg/ttlstore"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type authHandler struct {
 	accountUc domain.AccountUsecase
-	srv       *server.Server
+	mid       *middleware.ServerMiddleware
+	cfg       config.ServerConfig
+	logger    *logrus.Entry
+	token     tokengen.Generator
+	store     *ttlstore.MapStore[string, *domain.Session]
 }
 
-func NewAuthHandler(g *gin.RouterGroup, uc domain.AccountUsecase, srv *server.Server) {
+func NewAuthHandler(g *gin.RouterGroup, uc domain.AccountUsecase, mid *middleware.ServerMiddleware, cfg config.ServerConfig, token tokengen.Generator, store *ttlstore.MapStore[string, *domain.Session], logger *logrus.Entry) {
 	handler := &authHandler{
 		accountUc: uc,
-		srv:       srv,
+		cfg:       cfg,
+		mid:       mid,
+		logger:    logger,
+		token:     token,
+		store:     store,
 	}
 
 	g.POST("/register", handler.Register)
 	g.POST("/login", handler.Login)
 }
 
+// TODO: create registration/login via telegram username
 type registerAccountRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// @Summary      Register
+// @Description  registers new account
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input   body      registerAccountRequest  true  "register credantials"
+// @Success      201
+// @Failure      400     {object}  error
+// @Failure      500     {object}  error
+// @Router       /register [post]
 func (t *authHandler) Register(ctx *gin.Context) {
 	req := registerAccountRequest{}
 	if err := ctx.BindJSON(&req); err != nil {
@@ -38,12 +61,26 @@ func (t *authHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	domainAccount := domain.Account{
-		Role:  domain.AccountRoleCreator,
-		Email: req.Email,
+	hashed, err := tests.HashPassword(req.Password)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 
-		//TODO hash password
-		Password: []byte(req.Password),
+	domainAccount := domain.Account{
+		Role:     domain.AccountRoleCreator,
+		Email:    req.Email,
+		Password: hashed,
+	}
+
+	//TODO: Only for debug purpse. Figure out another way of creating administaror.
+	if req.Email == "admin" {
+		domainAccount.Role = domain.AccountRoleAdmin
+	}
+
+	//TODO: Only for debug purpse. Figure out another way of creating bots.
+	if req.Email == "bot" {
+		domainAccount.Role = domain.AccountRoleBot
 	}
 
 	if err := t.accountUc.Create(ctx.Request.Context(), &domainAccount); err != nil {
@@ -73,6 +110,17 @@ type loginAccountResponse struct {
 	Account               accountResponse `json:"account"`
 }
 
+// @Summary      Login
+// @Description  logins in to account with user provided credantials
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input   body      loginAccountRequest  true  "login credentials"
+// @Success      200     {object}  loginAccountResponse
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /login [post]
 func (t *authHandler) Login(ctx *gin.Context) {
 	var req loginAccountRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -94,7 +142,7 @@ func (t *authHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	acessToken, acessPayload, err := t.srv.Token.CreateToken(account, t.srv.Cfg.Token.AcessDuration)
+	acessToken, acessPayload, err := t.token.CreateToken(account, t.cfg.Token.AcessDuration)
 
 	if err != nil {
 		//TODO throw custom error: Passwords dont match
@@ -102,14 +150,14 @@ func (t *authHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	refreshToken, refreshPayload, err := t.srv.Token.CreateToken(account, t.srv.Cfg.Token.RefreshDuration)
+	refreshToken, refreshPayload, err := t.token.CreateToken(account, t.cfg.Token.RefreshDuration)
 	if err != nil {
 		//TODO throw custom error: Passwords dont match
 		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
 		return
 	}
 
-	if err := t.srv.Store.Set(ctx.Request.Context(), refreshPayload.ID.String(), &domain.Session{
+	if err := t.store.Set(ctx.Request.Context(), refreshPayload.ID.String(), &domain.Session{
 		ID:           refreshPayload.ID,
 		Instance:     *account,
 		RefreshToken: refreshToken,
@@ -117,7 +165,7 @@ func (t *authHandler) Login(ctx *gin.Context) {
 		ClientIP:     ctx.ClientIP(),
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpiredAt,
-	}, t.srv.Cfg.Token.RefreshDuration); err != nil {
+	}, t.cfg.Token.RefreshDuration); err != nil {
 		//TODO throw custom error: Passwords dont match
 		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
 		return

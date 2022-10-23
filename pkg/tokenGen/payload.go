@@ -47,7 +47,7 @@ func (payload *Payload) Valid() error {
 	return nil
 }
 
-func GetAccountFromContext(ctx *gin.Context, payloadkey string) (*Payload, error) {
+func GetPayloadFromContext(ctx *gin.Context, payloadkey string) (*Payload, error) {
 	payload, ok := ctx.Get(payloadkey)
 	if !ok {
 

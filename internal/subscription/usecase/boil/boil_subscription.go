@@ -123,7 +123,7 @@ func (s *subscriptionUsecaseBoil) List(ctx context.Context, cond domain.FindSubR
 	}
 
 	if cond.AccountID != nil {
-		conds = append(conds, qm.Where("creator_id=?", cond.AccountID.Eq))
+		conds = append(conds, qm.Where("account_id=?", cond.AccountID.Eq))
 	}
 
 	conds = append(conds, qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize)))

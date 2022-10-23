@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	herrors "github.com/BON4/gosubs/internal/errors"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -23,13 +23,15 @@ type ServerMiddleware struct {
 	tokenMaker tokengen.Generator
 	headerKey  string
 	payloadKey string
+	logger     *logrus.Entry
 }
 
-func NewServerMiddleware(tgen tokengen.Generator, cfg *config.ServerConfig) *ServerMiddleware {
+func NewServerMiddleware(tgen tokengen.Generator, cfg config.ServerConfig, logger *logrus.Entry) *ServerMiddleware {
 	return &ServerMiddleware{
 		tokenMaker: tgen,
 		headerKey:  cfg.Auth.HeaderKey,
 		payloadKey: cfg.Auth.PaylaodKey,
+		logger:     logger,
 	}
 }
 
@@ -54,20 +56,13 @@ func (m *ServerMiddleware) AuthMiddleware() gin.HandlerFunc {
 		}
 
 		fields := strings.Fields(authorizationHeader)
-		if len(fields) < 2 {
+		if len(fields) < 1 {
 			err := errors.New("invalid authorization header format")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, herrors.ErrorResponse(err))
 			return
 		}
 
-		authorizationType := strings.ToLower(fields[0])
-		if authorizationType != authorizationTypeBearer {
-			err := fmt.Errorf("unsupported authorization type %s", authorizationType)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, herrors.ErrorResponse(err))
-			return
-		}
-
-		accessToken := fields[1]
+		accessToken := fields[0]
 		payload, err := m.tokenMaker.VerifyToken(accessToken)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, herrors.ErrorResponse(err))

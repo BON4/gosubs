@@ -14,7 +14,7 @@ import (
 	sub_usecase "github.com/BON4/gosubs/internal/subscription/usecase/boil"
 	tguser_usecase "github.com/BON4/gosubs/internal/tguser/usecase"
 	_ "github.com/lib/pq"
-	"github.com/volatiletech/null/v8"
+	null "github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 

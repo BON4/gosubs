@@ -5,7 +5,7 @@ import (
 
 	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
+	null "github.com/volatiletech/null/v8"
 )
 
 type UserStatus string
@@ -25,7 +25,7 @@ type Tguser struct {
 	UserID     int64      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 	TelegramID int64      `boil:"telegram_id" json:"telegram_id" toml:"telegram_id" yaml:"telegram_id"`
 	Username   string     `boil:"username" json:"username" toml:"username" yaml:"username"`
-	Status     UserStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
+	Status     UserStatus `boil:"status" json:"status" toml:"status" yaml:"status" swaggertype:"string"`
 }
 
 func TguserDomainToBoil(user *Tguser, userout *boilmodels.Tguser) {
@@ -61,8 +61,8 @@ type Account struct {
 	Password  []byte      `boil:"password" json:"password" toml:"password" yaml:"password"`
 	Email     string      `boil:"email" json:"email" toml:"email" yaml:"email"`
 	Role      AccountRole `boil:"role" json:"role" toml:"role" yaml:"role"`
-	ChanName  null.String `boil:"chan_name" json:"chan_name,omitempty" toml:"chan_name" yaml:"chan_name,omitempty"`
-	UserID    null.Int64  `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty"`
+	ChanName  null.String `boil:"chan_name" json:"chan_name,omitempty" toml:"chan_name" yaml:"chan_name,omitempty" swaggertype:"string"`
+	UserID    null.Int64  `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty" swaggertype:"integer"`
 }
 
 func AccountDomainToBoil(creator *Account, creatorout *boilmodels.Account) {
@@ -94,7 +94,7 @@ type Sub struct {
 	ActivatedAt time.Time `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
 	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
-	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
+	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty" swaggertype:"integer"`
 }
 
 func SubDomainToBoil(sub *Sub, subout *boilmodels.Sub) {
@@ -135,8 +135,8 @@ type SubHistory struct {
 	ActivatedAt time.Time `boil:"activated_at" json:"activated_at" toml:"activated_at" yaml:"activated_at"`
 	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 	Status      SubStatus `boil:"status" json:"status" toml:"status" yaml:"status"`
-	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
-	SubHistID   int64     `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id"`
+	Price       null.Int  `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty" swaggertype:"integer"`
+	SubHistID   int64     `boil:"sub_hist_id" json:"sub_hist_id" toml:"sub_hist_id" yaml:"sub_hist_id" swaggertype:"integer"`
 }
 
 func SubHistoryDomainToBoil(sub *SubHistory, subout *boilmodels.SubHistory) {

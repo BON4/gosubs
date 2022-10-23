@@ -1,43 +1,70 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/BON4/gosubs/config"
 	"github.com/BON4/gosubs/internal/domain"
 	herrors "github.com/BON4/gosubs/internal/errors"
+	"github.com/BON4/gosubs/internal/middleware"
+	"github.com/BON4/gosubs/internal/utis/tests"
+	"github.com/sirupsen/logrus"
+	"github.com/volatiletech/null/v8"
 
-	"github.com/BON4/gosubs/internal/server"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/gin-gonic/gin"
 )
 
 type accountHandler struct {
+	userUc    domain.TgUserUsecase
 	accountUc domain.AccountUsecase
-	srv       *server.Server
+	mid       *middleware.ServerMiddleware
+	cfg       config.ServerConfig
+	logger    *logrus.Entry
 }
 
-func NewAccountHandler(g *gin.RouterGroup, uc domain.AccountUsecase, srv *server.Server) {
+func NewAccountHandler(g *gin.RouterGroup, uc domain.AccountUsecase, userUc domain.TgUserUsecase, mid *middleware.ServerMiddleware, cfg config.ServerConfig, logger *logrus.Entry) {
 	handler := &accountHandler{
 		accountUc: uc,
-		srv:       srv,
+		userUc:    userUc,
+		mid:       mid,
+		cfg:       cfg,
+		logger:    logger,
 	}
 
-	g.GET("/list", srv.MidWar.RoleRestriction(domain.AccountRoleAdmin), handler.ListAccounts)
+	//TODO: refactor list params from json req body to url query params:
+	// /list?from=10&to=100 ...
+	g.GET("/list", mid.RoleRestriction(domain.AccountRoleAdmin), handler.ListAccounts)
 
 	g.GET("/:acc_id", handler.GetAccount)
-	g.PATCH("/email", handler.UpdateEmail)
-	g.DELETE("/:acc_id", srv.MidWar.RoleRestriction(domain.AccountRoleAdmin), handler.DeleteAccount)
-
+	g.PATCH("/:acc_id/email", handler.UpdateEmail)
+	g.PATCH("/:acc_id/user", handler.UpdateUser)
+	g.PATCH("/:acc_id/password", handler.UpdatePassword)
+	g.DELETE("/:acc_id", mid.RoleRestriction(domain.AccountRoleAdmin), handler.DeleteAccount)
 }
 
+// @Summary      Get Account
+// @Description  get account by id. Creator can get only his account. Administrator can get any account
+// @Security     JWT
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        acc_id   path      int64  true  "account id"
+// @Success      200     {object}  domain.Account
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /account/{acc_id} [get]
 func (t *accountHandler) GetAccount(ctx *gin.Context) {
-	payload, err := tokengen.GetAccountFromContext(ctx, t.srv.Cfg.Auth.PaylaodKey)
+	payload, err := tokengen.GetPayloadFromContext(ctx, t.cfg.Auth.PaylaodKey)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
 		return
 	}
-	req_acc_id, err := strconv.ParseInt(ctx.Query("acc_id"), 10, 64)
+
+	req_acc_id, err := strconv.ParseInt(ctx.Param("acc_id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
@@ -56,11 +83,24 @@ func (t *accountHandler) GetAccount(ctx *gin.Context) {
 		return
 	}
 
+	//TODO: do not return domain.Account. Prepare it: hide password etc.
 	ctx.JSON(http.StatusOK, acc)
 }
 
+// @Summary      Delete Account
+// @Description  deletes an account. Only administrator can delete accounts.
+// @Security     JWT
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        acc_id   path      int64  true  "account id"
+// @Success      200
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /account/{acc_id} [delete]
 func (t *accountHandler) DeleteAccount(ctx *gin.Context) {
-	acc_id, err := strconv.ParseInt(ctx.Query("acc_id"), 10, 64)
+	acc_id, err := strconv.ParseInt(ctx.Param("acc_id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
@@ -74,6 +114,18 @@ func (t *accountHandler) DeleteAccount(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// @Summary      List Accounts
+// @Description  get account list. Only administrator can get list of accounts
+// @Security     JWT
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        input body   domain.FindAccountRequest  true  "account list request filter"
+// @Success      200     {array}   domain.Account
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /account/list [get]
 func (t *accountHandler) ListAccounts(ctx *gin.Context) {
 	req := domain.FindAccountRequest{}
 	if err := ctx.BindJSON(&req); err != nil {
@@ -87,18 +139,113 @@ func (t *accountHandler) ListAccounts(ctx *gin.Context) {
 		return
 	}
 
+	//TODO: do not respond with domain.Account
 	ctx.JSON(http.StatusOK, accounts)
+}
+
+type updateAccountPasswordRequest struct {
+	NewPassword string `json:"new_password"`
+	OldPassword string `json:"old_password,omitempty"`
+}
+
+// @Summary      Update Password
+// @Description  updates password for current account. Admin can change password without provieding an old password. Admin can update password for any user.
+// @Security     JWT
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        acc_id path int64 true "account id"
+// @Param        input body   updateAccountPasswordRequest  true  "account old and new password"
+// @Success      200
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /account/{acc_id}/password [patch]
+func (t *accountHandler) UpdatePassword(ctx *gin.Context) {
+	payload, err := tokengen.GetPayloadFromContext(ctx, t.cfg.Auth.PaylaodKey)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	req_acc_id, err := strconv.ParseInt(ctx.Param("acc_id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	if payload.Instance.Role != domain.AccountRoleAdmin {
+		if req_acc_id != payload.Instance.AccountID {
+			ctx.Status(http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	req := updateAccountPasswordRequest{}
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	acc, err := t.accountUc.GetByID(ctx.Request.Context(), req_acc_id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, herrors.ErrorResponse(err))
+		return
+	}
+	if payload.Instance.Role != domain.AccountRoleAdmin {
+		if err := tests.CheckPassword(req.OldPassword, acc.Password); err != nil {
+			ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(errors.New("Passwords dont match.")))
+			return
+		}
+	}
+
+	hashed, err := tests.HashPassword(req.NewPassword)
+
+	acc.Password = hashed
+
+	if err := t.accountUc.Update(ctx.Request.Context(), acc); err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		return
+	}
+
+	ctx.Status(http.StatusAccepted)
 }
 
 type updateAccountEmailRequest struct {
 	Email string `json:"email"`
 }
 
+// @Summary      Update Email
+// @Description  updates email for current user. Admin can update email for any user.
+// @Security     JWT
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        acc_id path int64 true "account id"
+// @Param        input body   updateAccountEmailRequest  true  "account new email"
+// @Success      200
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /account/{acc_id}/email [patch]
 func (t *accountHandler) UpdateEmail(ctx *gin.Context) {
-	payload, err := tokengen.GetAccountFromContext(ctx, t.srv.Cfg.Auth.PaylaodKey)
+	payload, err := tokengen.GetPayloadFromContext(ctx, t.cfg.Auth.PaylaodKey)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
+	}
+
+	req_acc_id, err := strconv.ParseInt(ctx.Param("acc_id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	if payload.Instance.Role != domain.AccountRoleAdmin {
+		if req_acc_id != payload.Instance.AccountID {
+			ctx.Status(http.StatusMethodNotAllowed)
+			return
+		}
 	}
 
 	req := updateAccountEmailRequest{}
@@ -107,13 +254,89 @@ func (t *accountHandler) UpdateEmail(ctx *gin.Context) {
 		return
 	}
 
-	acc, err := t.accountUc.GetByID(ctx.Request.Context(), payload.Instance.AccountID)
+	acc, err := t.accountUc.GetByID(ctx.Request.Context(), req_acc_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, herrors.ErrorResponse(err))
 		return
 	}
 
 	acc.Email = req.Email
+
+	if err := t.accountUc.Update(ctx.Request.Context(), acc); err != nil {
+		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		return
+	}
+
+	ctx.Status(http.StatusAccepted)
+}
+
+type updateAccountUserRequest struct {
+	UserID     int `json:"user_id"`
+	TelegramID int `json:"telegram_id"`
+}
+
+// @Summary      Update TgUser
+// @Description  updates telegram user conected to this account. Admin, can update email for any user. Either of one of the fields must be provided
+// @Security     JWT
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        acc_id path int64 true "account id"
+// @Param        input body   updateAccountUserRequest  true  "account new email"
+// @Success      200
+// @Failure      400     {object}  error
+// @Failure      401     {object}  error
+// @Failure      500     {object}  error
+// @Router       /account/{acc_id}/user [patch]
+func (t *accountHandler) UpdateUser(ctx *gin.Context) {
+	payload, err := tokengen.GetPayloadFromContext(ctx, t.cfg.Auth.PaylaodKey)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	req_acc_id, err := strconv.ParseInt(ctx.Param("acc_id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		return
+	}
+
+	if payload.Instance.Role != domain.AccountRoleAdmin {
+		if req_acc_id != payload.Instance.AccountID {
+			ctx.Status(http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	req := updateAccountUserRequest{}
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	usr := &domain.Tguser{}
+
+	if req.TelegramID == 0 {
+		usr, err = t.userUc.GetByID(ctx, int64(req.UserID))
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, herrors.ErrorResponse(err))
+			return
+		}
+	} else {
+		usr, err = t.userUc.GetByTelegramID(ctx, int64(req.UserID))
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, herrors.ErrorResponse(err))
+			return
+		}
+	}
+
+	acc, err := t.accountUc.GetByID(ctx.Request.Context(), req_acc_id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, herrors.ErrorResponse(err))
+		return
+	}
+
+	acc.UserID = null.Int64From(usr.UserID)
 
 	if err := t.accountUc.Update(ctx.Request.Context(), acc); err != nil {
 		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))

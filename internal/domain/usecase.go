@@ -34,7 +34,7 @@ type FindSubRequest struct {
 
 	AccountID *struct {
 		Eq int64 `json:"eq"`
-	} `json:"creator_id,omitempty"`
+	} `json:"account_id,omitempty"`
 
 	TgUserID *struct {
 		Eq int64 `json:"eq"`
