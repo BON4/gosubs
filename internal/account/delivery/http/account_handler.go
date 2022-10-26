@@ -118,18 +118,20 @@ func (t *accountHandler) DeleteAccount(ctx *gin.Context) {
 // @Description  get account list. Only administrator can get list of accounts
 // @Security     JWT
 // @Tags         account
-// @Accept       json
 // @Produce      json
-// @Param        input body   domain.FindAccountRequest  true  "account list request filter"
+// @Param        page_size         query     int              true "page size"
+// @Param        page_number       query     int              true "page number"
+// @Param        status_eq         query     string           false "status name is equal to"
+// @Param        status_like       query     string           false "status name is like"
 // @Success      200     {array}   domain.Account
 // @Failure      400     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /account/list [get]
 func (t *accountHandler) ListAccounts(ctx *gin.Context) {
-	req := domain.FindAccountRequest{}
-	if err := ctx.BindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	req, err := domain.ParseFindAccountRequest(ctx.Request.URL.Query())
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
 	}
 

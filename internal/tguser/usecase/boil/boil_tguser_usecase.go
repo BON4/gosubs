@@ -126,7 +126,27 @@ func (u *tgUserUsecaseBoil) Update(ctx context.Context, tguser *domain.Tguser) e
 }
 
 func (u *tgUserUsecaseBoil) List(ctx context.Context, cond domain.FindUserRequest) ([]*domain.Tguser, error) {
-	busers, err := boilmodels.Tgusers(qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize))).All(ctx, u.db)
+	var conds []qm.QueryMod = make([]qm.QueryMod, 0, 1)
+
+	if cond.Status != nil {
+		if cond.Status.Eq != nil {
+			conds = append(conds, qm.Where("status=?", *cond.Status.Eq))
+		} else if cond.Status.Like != nil {
+			conds = append(conds, qm.Where("status like ?%", *cond.Status.Like))
+		}
+	}
+
+	if cond.Username != nil {
+		if cond.Username.Eq != nil {
+			conds = append(conds, qm.Where("username=?", *cond.Username.Eq))
+		} else if cond.Username.Like != nil {
+			conds = append(conds, qm.Where("username like ?%", *cond.Username.Like))
+		}
+	}
+
+	conds = append(conds, qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize)))
+
+	busers, err := boilmodels.Tgusers(conds...).All(ctx, u.db)
 	if err != nil {
 		return make([]*domain.Tguser, 0), err
 	}

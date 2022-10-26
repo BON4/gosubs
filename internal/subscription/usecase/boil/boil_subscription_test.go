@@ -248,24 +248,16 @@ func BenchmarkSubList(b *testing.B) {
 		}
 	}
 
-	from := 0
-	to := 1000
+	from := int64(0)
+	to := int64(1000)
 
 	_, err := suc.List(ctx, domain.FindSubRequest{
-		Price: &struct {
-			Eq    *int `json:"eq,omitempty"`
-			Range *struct {
-				From *int `json:"from,omitempty"`
-				To   *int `json:"to,omitempty"`
-			} `json:"range,omitempty"`
+		PriceRange: &struct {
+			From *int64 `json:"from,omitempty"`
+			To   *int64 `json:"to,omitempty"`
 		}{
-			Range: &struct {
-				From *int `json:"from,omitempty"`
-				To   *int `json:"to,omitempty"`
-			}{
-				From: &from,
-				To:   &to,
-			},
+			From: &from,
+			To:   &to,
 		},
 		PageSettings: &struct {
 			PageSize   uint "json:\"page_size\""

@@ -24,9 +24,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "get account list. Only administrator can get list of accounts",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -36,13 +33,30 @@ const docTemplate = `{
                 "summary": "List Accounts",
                 "parameters": [
                     {
-                        "description": "account list request filter",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.FindAccountRequest"
-                        }
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "page_size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "status name is equal to",
+                        "name": "status_eq",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "status name is like",
+                        "name": "status_like",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -515,9 +529,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "get subscription list. Only administrator and bot can get list of any accounts. Ordenery user can get list of subscriptions whitch belongs to his account.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -527,13 +538,51 @@ const docTemplate = `{
                 "summary": "List Subscriptions",
                 "parameters": [
                     {
-                        "description": "subscription list request filter",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.FindSubRequest"
-                        }
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "page_size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "status name is equal to",
+                        "name": "status_eq",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "range of prices starting at",
+                        "name": "price_range",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "status name is like",
+                        "name": "status_like",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "account id equal to",
+                        "name": "account_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "user id equal to",
+                        "name": "user_id",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -620,9 +669,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "get user list. Only administrator and bot can get list of accounts",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -632,13 +678,42 @@ const docTemplate = `{
                 "summary": "List Users",
                 "parameters": [
                     {
-                        "description": "user list request filter",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.FindUserRequest"
-                        }
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "page_size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "role name is equal to",
+                        "name": "role_eq",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "role name is like",
+                        "name": "role_like",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "username is equal to",
+                        "name": "username_eq",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "username is like",
+                        "name": "username_like",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -842,99 +917,6 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "domain.FindAccountRequest": {
-            "type": "object",
-            "properties": {
-                "page_settings": {
-                    "description": "Username *struct {\n\tLike string ` + "`" + `json:\"LIKE\"` + "`" + `\n\tEq   string ` + "`" + `json:\"EQ\"` + "`" + `\n} ` + "`" + `json:\"username\"` + "`" + `\nEmail *struct {\n\tLike string ` + "`" + `json:\"LIKE\"` + "`" + `\n\tEq   string ` + "`" + `json:\"EQ\"` + "`" + `\n} ` + "`" + `json:\"email\"` + "`" + `",
-                    "type": "object",
-                    "properties": {
-                        "page_number": {
-                            "type": "integer"
-                        },
-                        "page_size": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
-        "domain.FindSubRequest": {
-            "type": "object",
-            "properties": {
-                "account_id": {
-                    "type": "object",
-                    "properties": {
-                        "eq": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "page_settings": {
-                    "type": "object",
-                    "properties": {
-                        "page_number": {
-                            "type": "integer"
-                        },
-                        "page_size": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "price": {
-                    "type": "object",
-                    "properties": {
-                        "eq": {
-                            "type": "integer"
-                        },
-                        "range": {
-                            "type": "object",
-                            "properties": {
-                                "from": {
-                                    "type": "integer"
-                                },
-                                "to": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    }
-                },
-                "status": {
-                    "type": "object",
-                    "properties": {
-                        "eq": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "tguser_id": {
-                    "type": "object",
-                    "properties": {
-                        "eq": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
-        "domain.FindUserRequest": {
-            "type": "object",
-            "properties": {
-                "page_settings": {
-                    "description": "Username *struct {\n\tLike string ` + "`" + `json:\"LIKE\"` + "`" + `\n\tEq   string ` + "`" + `json:\"EQ\"` + "`" + `\n} ` + "`" + `json:\"username\"` + "`" + `\nEmail *struct {\n\tLike string ` + "`" + `json:\"LIKE\"` + "`" + `\n\tEq   string ` + "`" + `json:\"EQ\"` + "`" + `\n} ` + "`" + `json:\"email\"` + "`" + `",
-                    "type": "object",
-                    "properties": {
-                        "page_number": {
-                            "type": "integer"
-                        },
-                        "page_size": {
-                            "type": "integer"
-                        }
-                    }
                 }
             }
         },

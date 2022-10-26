@@ -101,21 +101,23 @@ func (s *subscriptionUsecaseBoil) Delete(ctx context.Context, userID int64, crea
 func (s *subscriptionUsecaseBoil) List(ctx context.Context, cond domain.FindSubRequest) ([]*domain.Sub, error) {
 	var conds []qm.QueryMod = make([]qm.QueryMod, 0, 1)
 	if cond.Price != nil {
-		if cond.Price.Eq != nil {
-			conds = append(conds, qm.Where("price=?", *cond.Price.Eq))
-		} else if cond.Price.Range != nil {
-			if cond.Price.Range.From != nil {
-				conds = append(conds, qm.Where("price>?", *cond.Price.Range.From))
-			}
+		conds = append(conds, qm.Where("price=?", cond.Price.Eq))
+	} else if cond.PriceRange != nil {
+		if cond.PriceRange.From != nil {
+			conds = append(conds, qm.Where("price>?", *cond.PriceRange.From))
+		}
 
-			if cond.Price.Range.To != nil {
-				conds = append(conds, qm.Where("price<?", *cond.Price.Range.To))
-			}
+		if cond.PriceRange.To != nil {
+			conds = append(conds, qm.Where("price<?", *cond.PriceRange.To))
 		}
 	}
 
 	if cond.Status != nil {
-		conds = append(conds, qm.Where("status=?", cond.Status.Eq))
+		if cond.Status.Eq != nil {
+			conds = append(conds, qm.Where("status=?", cond.Status.Eq))
+		} else if cond.Status.Like != nil {
+			conds = append(conds, qm.Where("status like ?%", cond.Status.Like))
+		}
 	}
 
 	if cond.TgUserID != nil {

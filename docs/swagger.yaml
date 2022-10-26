@@ -17,69 +17,6 @@ definitions:
       user_id:
         type: integer
     type: object
-  domain.FindAccountRequest:
-    properties:
-      page_settings:
-        description: "Username *struct {\n\tLike string `json:\"LIKE\"`\n\tEq   string
-          `json:\"EQ\"`\n} `json:\"username\"`\nEmail *struct {\n\tLike string `json:\"LIKE\"`\n\tEq
-          \  string `json:\"EQ\"`\n} `json:\"email\"`"
-        properties:
-          page_number:
-            type: integer
-          page_size:
-            type: integer
-        type: object
-    type: object
-  domain.FindSubRequest:
-    properties:
-      account_id:
-        properties:
-          eq:
-            type: integer
-        type: object
-      page_settings:
-        properties:
-          page_number:
-            type: integer
-          page_size:
-            type: integer
-        type: object
-      price:
-        properties:
-          eq:
-            type: integer
-          range:
-            properties:
-              from:
-                type: integer
-              to:
-                type: integer
-            type: object
-        type: object
-      status:
-        properties:
-          eq:
-            type: string
-        type: object
-      tguser_id:
-        properties:
-          eq:
-            type: integer
-        type: object
-    type: object
-  domain.FindUserRequest:
-    properties:
-      page_settings:
-        description: "Username *struct {\n\tLike string `json:\"LIKE\"`\n\tEq   string
-          `json:\"EQ\"`\n} `json:\"username\"`\nEmail *struct {\n\tLike string `json:\"LIKE\"`\n\tEq
-          \  string `json:\"EQ\"`\n} `json:\"email\"`"
-        properties:
-          page_number:
-            type: integer
-          page_size:
-            type: integer
-        type: object
-    type: object
   domain.Sub:
     properties:
       account_id:
@@ -415,16 +352,26 @@ paths:
       - account
   /account/list:
     get:
-      consumes:
-      - application/json
       description: get account list. Only administrator can get list of accounts
       parameters:
-      - description: account list request filter
-        in: body
-        name: input
+      - description: page size
+        in: query
+        name: page_size
         required: true
-        schema:
-          $ref: '#/definitions/domain.FindAccountRequest'
+        type: integer
+      - description: page number
+        in: query
+        name: page_number
+        required: true
+        type: integer
+      - description: status name is equal to
+        in: query
+        name: status_eq
+        type: string
+      - description: status name is like
+        in: query
+        name: status_like
+        type: string
       produces:
       - application/json
       responses:
@@ -570,18 +517,42 @@ paths:
       - subscription
   /sub/list:
     get:
-      consumes:
-      - application/json
       description: get subscription list. Only administrator and bot can get list
         of any accounts. Ordenery user can get list of subscriptions whitch belongs
         to his account.
       parameters:
-      - description: subscription list request filter
-        in: body
-        name: input
+      - description: page size
+        in: query
+        name: page_size
         required: true
-        schema:
-          $ref: '#/definitions/domain.FindSubRequest'
+        type: integer
+      - description: page number
+        in: query
+        name: page_number
+        required: true
+        type: integer
+      - description: status name is equal to
+        in: query
+        name: status_eq
+        type: string
+      - description: range of prices starting at
+        in: query
+        items:
+          type: integer
+        name: price_range
+        type: array
+      - description: status name is like
+        in: query
+        name: status_like
+        type: string
+      - description: account id equal to
+        in: query
+        name: account_id
+        type: integer
+      - description: user id equal to
+        in: query
+        name: user_id
+        type: integer
       produces:
       - application/json
       responses:
@@ -741,16 +712,34 @@ paths:
       - user
   /user/list:
     get:
-      consumes:
-      - application/json
       description: get user list. Only administrator and bot can get list of accounts
       parameters:
-      - description: user list request filter
-        in: body
-        name: input
+      - description: page size
+        in: query
+        name: page_size
         required: true
-        schema:
-          $ref: '#/definitions/domain.FindUserRequest'
+        type: integer
+      - description: page number
+        in: query
+        name: page_number
+        required: true
+        type: integer
+      - description: role name is equal to
+        in: query
+        name: role_eq
+        type: string
+      - description: role name is like
+        in: query
+        name: role_like
+        type: string
+      - description: username is equal to
+        in: query
+        name: username_eq
+        type: string
+      - description: username is like
+        in: query
+        name: username_like
+        type: string
       produces:
       - application/json
       responses:

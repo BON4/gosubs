@@ -161,7 +161,19 @@ func (c *accUsecaseBoil) Update(ctx context.Context, acc *domain.Account) error 
 }
 
 func (c *accUsecaseBoil) List(ctx context.Context, cond domain.FindAccountRequest) ([]*domain.Account, error) {
-	baccs, err := boilmodels.Accounts(qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize))).All(ctx, c.db)
+	var conds []qm.QueryMod = make([]qm.QueryMod, 0, 1)
+
+	if cond.Role != nil {
+		if cond.Role.Eq != nil {
+			conds = append(conds, qm.Where("role=?", *cond.Role.Eq))
+		} else if cond.Role.Like != nil {
+			conds = append(conds, qm.Where("role like ?%", *cond.Role.Like))
+		}
+	}
+
+	conds = append(conds, qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize)))
+
+	baccs, err := boilmodels.Accounts(conds...).All(ctx, c.db)
 	if err != nil {
 		return make([]*domain.Account, 0), err
 	}

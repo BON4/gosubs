@@ -41,17 +41,22 @@ func NewSubscriptionHandler(g *gin.RouterGroup, suc domain.SubscriptionUsecase, 
 // @Description  get subscription list. Only administrator and bot can get list of any accounts. Ordenery user can get list of subscriptions whitch belongs to his account.
 // @Security     JWT
 // @Tags         subscription
-// @Accept       json
 // @Produce      json
-// @Param        input body   domain.FindSubRequest  true  "subscription list request filter"
+// @Param        page_size         query     int              true "page size"
+// @Param        page_number       query     int              true "page number"
+// @Param        status_eq         query     string           false "status name is equal to"
+// @Param        price_range       query     []int            false "range of prices starting at"
+// @Param        status_like       query     string           false "status name is like"
+// @Param        account_id        query     int              false "account id equal to"
+// @Param        user_id           query     int              false "user id equal to"
 // @Success      200     {array}   domain.Sub
 // @Failure      400     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /sub/list [get]
 func (t *subscriptionHandler) List(ctx *gin.Context) {
-	req := domain.FindSubRequest{}
-	if err := ctx.BindJSON(&req); err != nil {
+	req, err := domain.ParseFindSubRequest(ctx.Request.URL.Query())
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
 	}
@@ -149,6 +154,7 @@ type createSubscriptionRequest struct {
 // @Failure      500     {object}  error
 // @Router       /sub [post]
 func (t *subscriptionHandler) Create(ctx *gin.Context) {
+
 	req := createSubscriptionRequest{}
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))

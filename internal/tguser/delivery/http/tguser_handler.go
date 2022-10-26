@@ -101,18 +101,22 @@ func (t *tgUserHandler) Update(ctx *gin.Context) {
 // @Description  get user list. Only administrator and bot can get list of accounts
 // @Security     JWT
 // @Tags         user
-// @Accept       json
 // @Produce      json
-// @Param        input body   domain.FindUserRequest  true  "user list request filter"
+// @Param        page_size         query     int              true "page size"
+// @Param        page_number       query     int              true "page number"
+// @Param        role_eq           query     string           false "role name is equal to"
+// @Param        role_like         query     string           false "role name is like"
+// @Param        username_eq       query     string           false "username is equal to"
+// @Param        username_like     query     string           false "username is like"
 // @Success      200     {array}   domain.Tguser
 // @Failure      400     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /user/list [get]
 func (t *tgUserHandler) ListUsers(ctx *gin.Context) {
-	req := domain.FindUserRequest{}
-	if err := ctx.BindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	req, err := domain.ParseFindUserRequest(ctx.Request.URL.Query())
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
 		return
 	}
 
