@@ -51,6 +51,8 @@ github.com/Azure/azure-sdk-for-go/sdk/internal v0.9.1/go.mod h1:KLF4gFr6DcKFZwSu
 github.com/AzureAD/microsoft-authentication-library-for-go v0.4.0/go.mod h1:Vt9sXTKwMyGcOxSmLDMnGPgqsUg7m8pe215qMLrDXw4=
 github.com/BON4/timedQ v0.0.0-20220927121731-39fa7e5ad5fe h1:AX/Z6K+Y8ejd7QxN2f0zwIDIhsRNrJwU9Lxk4DBLGhc=
 github.com/BON4/timedQ v0.0.0-20220927121731-39fa7e5ad5fe/go.mod h1:YvgNeXDvFhuPNzKoQ3zosSPujxNupuxZlXvX1IrWusQ=
+github.com/BON4/timedQ v0.0.0-20221205075517-8f82783b383e h1:JXSVqCgsZBpLO66QG/0vqhEgwWxF+7Zg6PU5hKGqZG8=
+github.com/BON4/timedQ v0.0.0-20221205075517-8f82783b383e/go.mod h1:YvgNeXDvFhuPNzKoQ3zosSPujxNupuxZlXvX1IrWusQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=

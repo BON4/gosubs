@@ -4,7 +4,60 @@ import (
 	"context"
 	"strconv"
 	"strings"
+
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
 )
+
+type TgUserUsecase interface {
+	GetByID(ctx context.Context, id int64) (*models.Tguser, error)
+
+	GetByTelegramID(ctx context.Context, id int64) (*models.Tguser, error)
+
+	//Create - will create new user.
+	Create(ctx context.Context, tguser *models.Tguser) error
+
+	// Delete - will delete user. Subscription will be deleted also.
+	Delete(ctx context.Context, id int64) error
+
+	Update(ctx context.Context, tguser *models.Tguser) error
+
+	List(ctx context.Context, cond FindUserRequest) ([]*models.Tguser, error)
+}
+
+type SubscriptionUsecase interface {
+	GetByID(ctx context.Context, userID int64, creatorID int64) (*models.Sub, error)
+
+	// Create - creates subscribtion
+	Create(ctx context.Context, sub *models.Sub) error
+
+	// Save - saves subscription to history table.
+	Save(ctx context.Context, sub *models.Sub) (int64, error)
+
+	Update(ctx context.Context, sub *models.Sub) error
+
+	Delete(ctx context.Context, userID int64, creatorID int64) error
+
+	List(ctx context.Context, cond FindSubRequest) ([]*models.Sub, error)
+}
+
+type AccountUsecase interface {
+	GetByEmail(ctx context.Context, email string) (*models.Account, error)
+
+	GetByID(ctx context.Context, id int64) (*models.Account, error)
+
+	GetByTelegramID(ctx context.Context, id int64) (*models.Account, error)
+
+	GetUser(ctx context.Context, id int64) (*models.Tguser, error)
+
+	Create(ctx context.Context, creator *models.Account) error
+
+	// Delete - will delete creator. Subscriptions will be deleted also.
+	Delete(ctx context.Context, id int64) error
+
+	Update(ctx context.Context, tguser *models.Account) error
+
+	List(ctx context.Context, cond FindAccountRequest) ([]*models.Account, error)
+}
 
 type FindSubRequest struct {
 	PriceRange *struct {
@@ -114,7 +167,7 @@ func ParseFindSubRequest(mapData map[string][]string) (FindSubRequest, error) {
 	var parsed_price_to int64
 	price_range, ok := mapData["price_range"]
 
-	if ok && len(page_number) > 0 {
+	if ok && len(price_range) > 0 {
 		price_range = strings.Split(price_range[0], ",")
 
 		req.PriceRange = &struct {
@@ -292,55 +345,4 @@ func ParseFindAccountRequest(mapData map[string][]string) (FindAccountRequest, e
 	}
 
 	return req, nil
-}
-
-type TgUserUsecase interface {
-	GetByID(ctx context.Context, id int64) (*Tguser, error)
-
-	GetByTelegramID(ctx context.Context, id int64) (*Tguser, error)
-
-	//Create - will create new user.
-	Create(ctx context.Context, tguser *Tguser) error
-
-	// Delete - will delete user. Subscription will be deleted also.
-	Delete(ctx context.Context, id int64) error
-
-	Update(ctx context.Context, tguser *Tguser) error
-
-	List(ctx context.Context, cond FindUserRequest) ([]*Tguser, error)
-}
-
-type SubscriptionUsecase interface {
-	GetByID(ctx context.Context, userID int64, creatorID int64) (*Sub, error)
-
-	// Create - creates subscribtion
-	Create(ctx context.Context, sub *Sub) error
-
-	// Save - saves subscription to history table.
-	Save(ctx context.Context, sub *Sub) (int64, error)
-
-	Update(ctx context.Context, sub *Sub) error
-
-	Delete(ctx context.Context, userID int64, creatorID int64) error
-
-	List(ctx context.Context, cond FindSubRequest) ([]*Sub, error)
-}
-
-type AccountUsecase interface {
-	GetByEmail(ctx context.Context, email string) (*Account, error)
-
-	GetByID(ctx context.Context, id int64) (*Account, error)
-
-	GetByTelegramID(ctx context.Context, id int64) (*Account, error)
-
-	GetUser(ctx context.Context, id int64) (*Tguser, error)
-
-	Create(ctx context.Context, creator *Account) error
-
-	// Delete - will delete creator. Subscriptions will be deleted also.
-	Delete(ctx context.Context, id int64) error
-
-	Update(ctx context.Context, tguser *Account) error
-
-	List(ctx context.Context, cond FindAccountRequest) ([]*Account, error)
 }

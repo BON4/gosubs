@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
-	"github.com/BON4/gosubs/internal/domain"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	"github.com/sirupsen/logrus"
 	null "github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -16,6 +18,7 @@ import (
 )
 
 var db *sql.DB
+var logger = logrus.New()
 
 func TestMain(m *testing.M) {
 	var err error
@@ -35,16 +38,13 @@ func TestAccountCreate(t *testing.T) {
 	ctx := context.TODO()
 
 	crt := tests.RrandomAccountBoil(null.NewInt64(0, false))
-	creatorUC := account_usecase.NewBoilAccountUsecase(db)
+	creatorUC := account_usecase.NewBoilAccountUsecase(db, logger.WithContext(ctx))
 
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(crt, domainAccount)
-
-	if err := creatorUC.Create(ctx, domainAccount); err != nil {
+	if err := creatorUC.Create(ctx, crt); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := creatorUC.GetByID(ctx, domainAccount.AccountID)
+	_, err := creatorUC.GetByID(ctx, crt.AccountID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,21 +57,18 @@ func TestAccountcDelete(t *testing.T) {
 	ctx := context.TODO()
 
 	crt := tests.RrandomAccountBoil(null.NewInt64(0, false))
-	creatorUC := account_usecase.NewBoilAccountUsecase(db)
+	creatorUC := account_usecase.NewBoilAccountUsecase(db, logger.WithContext(ctx))
 
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(crt, domainAccount)
-
-	if err := creatorUC.Create(ctx, domainAccount); err != nil {
+	if err := creatorUC.Create(ctx, crt); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := creatorUC.Delete(ctx, domainAccount.AccountID); err != nil {
+	if err := creatorUC.Delete(ctx, crt.AccountID); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := creatorUC.GetByID(ctx, domainAccount.AccountID)
-	if err != sql.ErrNoRows {
+	_, err := creatorUC.GetByID(ctx, crt.AccountID)
+	if !errors.Is(err, sql.ErrNoRows) {
 		t.Fatal(err)
 	}
 }
@@ -88,39 +85,36 @@ func TestAccountUpdate(t *testing.T) {
 	}
 
 	crt := tests.RrandomAccountBoil(null.Int64From(usr.UserID))
-	creatorUC := account_usecase.NewBoilAccountUsecase(db)
+	creatorUC := account_usecase.NewBoilAccountUsecase(db, logger.WithContext(ctx))
 
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(crt, domainAccount)
-
-	if err := creatorUC.Create(ctx, domainAccount); err != nil {
+	if err := creatorUC.Create(ctx, crt); err != nil {
 		t.Fatal(err)
 	}
 
-	domainAccount.ChanName = null.StringFrom("updated")
-	domainAccount.Email = "updated"
-	domainAccount.Password = []byte("UPDATED")
-	domainAccount.Role = domain.AccountRoleCreator
-	domainAccount.UserID = null.Int64From(usr.UserID)
+	crt.ChanName = null.StringFrom("updated")
+	crt.Email = "updated"
+	crt.Password = []byte("UPDATED")
+	crt.Role = models.AccountRoleCreator
+	crt.UserID = null.Int64From(usr.UserID)
 
-	if err := creatorUC.Update(ctx, domainAccount); err != nil {
+	if err := creatorUC.Update(ctx, crt); err != nil {
 		t.Fatal(err)
 	}
 
-	found, err := creatorUC.GetByID(ctx, domainAccount.AccountID)
+	found, err := creatorUC.GetByID(ctx, crt.AccountID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if found.AccountID != domainAccount.AccountID ||
-		found.ChanName != domainAccount.ChanName ||
-		found.Role != domainAccount.Role ||
-		found.UserID != domainAccount.UserID ||
-		bytes.Compare(found.Password, domainAccount.Password) != 0 ||
-		found.Email != domainAccount.Email {
+	if found.AccountID != crt.AccountID ||
+		found.ChanName != crt.ChanName ||
+		found.Role != crt.Role ||
+		found.UserID != crt.UserID ||
+		bytes.Compare(found.Password, crt.Password) != 0 ||
+		found.Email != crt.Email {
 
 		t.Logf("Found: %+v\n", found)
-		t.Logf("Expected: %+v\n", domainAccount)
+		t.Logf("Expected: %+v\n", crt)
 		t.Fatal("entities dont match")
 	}
 }

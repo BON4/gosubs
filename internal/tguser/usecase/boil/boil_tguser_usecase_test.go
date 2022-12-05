@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/BON4/gosubs/internal/domain"
-	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	"github.com/sirupsen/logrus"
+
+	//myerrors "github.com/BON4/gosubs/internal/errors"
 
 	user_usecase "github.com/BON4/gosubs/internal/tguser/usecase/boil"
 	"github.com/BON4/gosubs/internal/utis/tests"
@@ -14,6 +16,7 @@ import (
 )
 
 var db *sql.DB
+var logger = logrus.New()
 
 func TestMain(m *testing.M) {
 	var err error
@@ -33,16 +36,13 @@ func TestTguserCreate(t *testing.T) {
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	userUC := user_usecase.NewBoilTgUserUsecase(db)
+	userUC := user_usecase.NewBoilTgUserUsecase(db, logger.WithContext(ctx))
 
-	domainUser := &domain.Tguser{}
-	domain.TguserBoilToDomain(usr, domainUser)
-
-	if err := userUC.Create(ctx, domainUser); err != nil {
+	if err := userUC.Create(ctx, usr); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := boilmodels.FindTguser(ctx, db, domainUser.UserID)
+	_, err := models.FindTguser(ctx, db, usr.UserID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,59 +55,53 @@ func TestTguserDelete(t *testing.T) {
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	userUC := user_usecase.NewBoilTgUserUsecase(db)
+	userUC := user_usecase.NewBoilTgUserUsecase(db, logger.WithContext(ctx))
 
-	domainUser := &domain.Tguser{}
-	domain.TguserBoilToDomain(usr, domainUser)
-
-	if err := userUC.Create(ctx, domainUser); err != nil {
+	if err := userUC.Create(ctx, usr); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := userUC.Delete(ctx, domainUser.UserID); err != nil {
+	if err := userUC.Delete(ctx, usr.UserID); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := boilmodels.FindTguser(ctx, db, domainUser.UserID)
+	_, err := models.FindTguser(ctx, db, usr.UserID)
 	if err != sql.ErrNoRows {
 		t.Fatal(err)
 	}
 }
 
-func TestSubUpdate(t *testing.T) {
+func TestTguserUpdate(t *testing.T) {
 	tests.DeleteAllBoil(db)
 	defer tests.DeleteAllBoil(db)
 
 	ctx := context.TODO()
 
 	usr := tests.RandomUserBoil()
-	userUC := user_usecase.NewBoilTgUserUsecase(db)
+	userUC := user_usecase.NewBoilTgUserUsecase(db, logger.WithContext(ctx))
 
-	domainUser := &domain.Tguser{}
-	domain.TguserBoilToDomain(usr, domainUser)
-
-	if err := userUC.Create(ctx, domainUser); err != nil {
+	if err := userUC.Create(ctx, usr); err != nil {
 		t.Fatal(err)
 	}
 
-	domainUser.Username = "updated"
-	domainUser.Status = domain.UserStatus(boilmodels.UserStatusKicked)
+	usr.Username = "updated"
+	usr.Status = models.UserStatusKicked
 
-	if err := userUC.Update(ctx, domainUser); err != nil {
+	if err := userUC.Update(ctx, usr); err != nil {
 		t.Fatal(err)
 	}
 
-	found, err := boilmodels.FindTguser(ctx, db, domainUser.UserID)
+	found, err := models.FindTguser(ctx, db, usr.UserID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if found.UserID != domainUser.UserID ||
-		found.TelegramID != domainUser.TelegramID ||
-		found.Username != domainUser.Username ||
-		found.Status != boilmodels.UserStatus(domainUser.Status) {
+	if found.UserID != usr.UserID ||
+		found.TelegramID != usr.TelegramID ||
+		found.Username != usr.Username ||
+		found.Status != models.UserStatus(usr.Status) {
 		t.Logf("Found: %+v\n", found)
-		t.Logf("Expected: %+v\n", domainUser)
+		t.Logf("Expected: %+v\n", usr)
 		t.Fatal("entities dont match")
 	}
 }

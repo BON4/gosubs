@@ -3,7 +3,7 @@ module github.com/BON4/gosubs
 go 1.19
 
 require (
-	github.com/BON4/timedQ v0.0.0-20220927121731-39fa7e5ad5fe // indirect
+	github.com/BON4/timedQ v0.0.0-20221205075517-8f82783b383e // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect

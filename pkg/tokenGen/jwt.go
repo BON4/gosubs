@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BON4/gosubs/internal/domain"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -25,7 +25,7 @@ func NewJWTGenerator(secretKey string) (Generator, error) {
 }
 
 // CreateToken creates a new token for a specific username and duration
-func (maker *JWTGenerator) CreateToken(account *domain.Account, duration time.Duration) (string, *Payload, error) {
+func (maker *JWTGenerator) CreateToken(account *models.Account, duration time.Duration) (string, *Payload, error) {
 	payload, err := NewPayload(account, duration)
 	if err != nil {
 		return "", payload, err

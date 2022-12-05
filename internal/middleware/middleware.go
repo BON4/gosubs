@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/BON4/gosubs/config"
-	"github.com/BON4/gosubs/internal/domain"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+
 	herrors "github.com/BON4/gosubs/internal/errors"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/gin-gonic/gin"
@@ -29,8 +30,8 @@ type ServerMiddleware struct {
 func NewServerMiddleware(tgen tokengen.Generator, cfg config.ServerConfig, logger *logrus.Entry) *ServerMiddleware {
 	return &ServerMiddleware{
 		tokenMaker: tgen,
-		headerKey:  cfg.Auth.HeaderKey,
-		payloadKey: cfg.Auth.PaylaodKey,
+		headerKey:  cfg.HeaderKey,
+		payloadKey: cfg.PaylaodKey,
 		logger:     logger,
 	}
 }
@@ -74,7 +75,7 @@ func (m *ServerMiddleware) AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func (m *ServerMiddleware) RoleRestriction(alowedRoles ...domain.AccountRole) gin.HandlerFunc {
+func (m *ServerMiddleware) RoleRestriction(alowedRoles ...models.AccountRole) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		payload, ok := ctx.Get(m.payloadKey)
 		if !ok {

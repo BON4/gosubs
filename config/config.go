@@ -1,47 +1,44 @@
 package config
 
 import (
-	"os"
 	"time"
 
 	"github.com/BON4/timedQ/pkg/ttlstore"
-	"gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
 )
 
 type ServerConfig struct {
-	AppConfig struct {
-		Port    string `yaml:"port"`
-		LogFile string `yaml:"log-file"`
-	} `yaml:"app"`
+	Port    string `yaml:"port" mapstructure:"PORT"`
+	LogFile string `yaml:"log-file" mapstructure:"LOG_PATH"`
 
-	Token struct {
-		AcessDuration   time.Duration `yaml:"acess_duration"`
-		RefreshDuration time.Duration `yaml:"refresh_duration"`
-	} `yaml:"token"`
+	AcessDuration   time.Duration `yaml:"acess_duration" mapstructure:"ACESS_DUR"`
+	RefreshDuration time.Duration `yaml:"refresh_duration" mapstructure:"REFRESH_DUR"`
 
-	Auth struct {
-		HeaderKey  string `yaml:"header_key"`
-		PaylaodKey string `yaml:"payload_key"`
-	} `yaml:"auth"`
+	HeaderKey  string `yaml:"header_key" mapstructure:"HEADER_KEY"`
+	PaylaodKey string `yaml:"payload_key" mapstructure:"PAYLOAD_KEY"`
 
-	DBconn string `yaml:"db_conn"`
+	DBconn string `yaml:"db_source" mapstructure:"DB_SOURCE"`
 
-	ttlstore.TTLStoreConfig `yaml:"store"`
+	Store ttlstore.TTLStoreConfig
 }
 
-func LoadServerConfig(path string) (ServerConfig, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return ServerConfig{}, err
-	}
-	defer f.Close()
+func LoadServerConfig(path string) (config ServerConfig, err error) {
+	viper.AddConfigPath(path)
+	viper.SetConfigName("cfg")
+	viper.SetConfigType("env")
 
-	var cfg ServerConfig
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
+	viper.AutomaticEnv()
+
+	err = viper.ReadInConfig()
 	if err != nil {
-		return ServerConfig{}, err
+		return
 	}
 
-	return cfg, nil
+	var storeCfg ttlstore.TTLStoreConfig
+
+	err = viper.Unmarshal(&storeCfg)
+
+	err = viper.Unmarshal(&config)
+	config.Store = storeCfg
+	return
 }

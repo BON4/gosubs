@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/BON4/gosubs/internal/domain"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -20,11 +20,11 @@ type Payload struct {
 	ID        uuid.UUID `json:"id"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiredAt time.Time `json:"expired_at"`
-	Instance  domain.Account
+	Instance  models.Account
 }
 
 // NewPayload creates a new token payload with a specific username and duration
-func NewPayload(account *domain.Account, duration time.Duration) (*Payload, error) {
+func NewPayload(account *models.Account, duration time.Duration) (*Payload, error) {
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err

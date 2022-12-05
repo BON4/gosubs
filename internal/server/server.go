@@ -39,14 +39,14 @@ var SECRET = "8TKBySYHx9C7p0I2Pz3JlemhYkl10go24"
 func SetupHandlers(s *Server) {
 	s.g.Use(s.MidWar.CORS())
 
-	uuc := user_usecase.NewBoilTgUserUsecase(s.DB)
+	uuc := user_usecase.NewBoilTgUserUsecase(s.DB, s.Logger.WithField("user usecase", struct{}{}))
 	users_group := s.g.Group("/user", s.MidWar.AuthMiddleware())
 
-	auc := account_usecase.NewBoilAccountUsecase(s.DB)
+	auc := account_usecase.NewBoilAccountUsecase(s.DB, s.Logger.WithField("account usecase", struct{}{}))
 	acc_group := s.g.Group("/account", s.MidWar.AuthMiddleware())
 	auth_group := s.g.Group("")
 
-	suc := sub_usecase.NewBoilSubscriptionUsecase(s.DB)
+	suc := sub_usecase.NewBoilSubscriptionUsecase(s.DB, s.Logger.WithField("subscription usecase", struct{}{}))
 	sub_group := s.g.Group("/sub", s.MidWar.AuthMiddleware())
 
 	tguser_handle.NewTgUserHandler(users_group, uuc, s.MidWar, s.Cfg, s.Logger.WithField("users", ""))
@@ -97,10 +97,12 @@ func NewServer(configPath string) (*Server, error) {
 		return nil, err
 	}
 
-	log, err := setUpLogger(cfg.AppConfig.LogFile)
+	log, err := setUpLogger(cfg.LogFile)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Info(cfg)
 
 	token, err := tokengen.NewJWTGenerator(SECRET)
 	if err != nil {
@@ -117,9 +119,9 @@ func NewServer(configPath string) (*Server, error) {
 		panic(err)
 	}
 
-	store := ttlstore.NewMapStore[string, *domain.Session](context.Background(), cfg.TTLStoreConfig)
+	store := ttlstore.NewMapStore[string, *domain.Session](context.Background(), cfg.Store)
 
-	log.Infof("Creating db file in: %s", cfg.TTLStoreConfig.SavePath)
+	log.Infof("Creating db file in: %s", cfg.Store.SavePath)
 
 	if err := store.Load(); err != nil {
 		panic(err)
@@ -143,10 +145,10 @@ func NewServer(configPath string) (*Server, error) {
 func (s *Server) Run() error {
 	srv := &http.Server{
 		Handler: s.g,
-		Addr:    s.Cfg.AppConfig.Port,
+		Addr:    s.Cfg.Port,
 	}
 
-	s.Logger.Infof("Running on: %s", s.Cfg.AppConfig.Port)
+	s.Logger.Infof("Running on: %s", s.Cfg.Port)
 
 	//Swagger
 	s.g.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
@@ -183,7 +185,7 @@ func (s *Server) Run() error {
 		s.Logger.Error("Server Shutdown Err:", err)
 		return err
 	}
-	// catching ctx.Done(). timeout of 5 seconds.
+
 	select {
 	case <-ctx.Done():
 		s.Logger.Info("timeout of 5 seconds.")

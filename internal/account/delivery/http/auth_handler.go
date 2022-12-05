@@ -6,7 +6,9 @@ import (
 
 	"github.com/BON4/gosubs/config"
 	"github.com/BON4/gosubs/internal/domain"
-	herrors "github.com/BON4/gosubs/internal/errors"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	myerrors "github.com/BON4/gosubs/internal/errors"
+
 	"github.com/BON4/gosubs/internal/middleware"
 	"github.com/BON4/gosubs/internal/utis/tests"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
@@ -51,7 +53,9 @@ type registerAccountRequest struct {
 // @Produce      json
 // @Param        input   body      registerAccountRequest  true  "register credantials"
 // @Success      201
+// @Failure      204     {object}  error
 // @Failure      400     {object}  error
+// @Failure      409     {object}  error
 // @Failure      500     {object}  error
 // @Router       /register [post]
 func (t *authHandler) Register(ctx *gin.Context) {
@@ -67,24 +71,24 @@ func (t *authHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	domainAccount := domain.Account{
-		Role:     domain.AccountRoleCreator,
+	domainAccount := models.Account{
+		Role:     models.AccountRoleCreator,
 		Email:    req.Email,
 		Password: hashed,
 	}
 
 	//TODO: Only for debug purpse. Figure out another way of creating administaror.
 	if req.Email == "admin" {
-		domainAccount.Role = domain.AccountRoleAdmin
+		domainAccount.Role = models.AccountRoleAdmin
 	}
 
 	//TODO: Only for debug purpse. Figure out another way of creating bots.
 	if req.Email == "bot" {
-		domainAccount.Role = domain.AccountRoleBot
+		domainAccount.Role = models.AccountRoleBot
 	}
 
 	if err := t.accountUc.Create(ctx.Request.Context(), &domainAccount); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 
@@ -99,7 +103,7 @@ type loginAccountRequest struct {
 type accountResponse struct {
 	AccountID int64              `json:"account_id"`
 	Email     string             `json:"email"`
-	Role      domain.AccountRole `json:"role"`
+	Role      models.AccountRole `json:"role"`
 }
 
 type loginAccountResponse struct {
@@ -117,43 +121,45 @@ type loginAccountResponse struct {
 // @Produce      json
 // @Param        input   body      loginAccountRequest  true  "login credentials"
 // @Success      200     {object}  loginAccountResponse
+// @Failure      204     {object}  error
 // @Failure      400     {object}  error
+// @Failure      409     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /login [post]
 func (t *authHandler) Login(ctx *gin.Context) {
 	var req loginAccountRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, myerrors.ErrorResponse(err))
 		return
 	}
 
 	account, err := t.accountUc.GetByEmail(ctx.Request.Context(), req.Email)
 	if err != nil {
 		//TODO if sql.ErrNoRows throw custom error
-		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, myerrors.ErrorResponse(err))
 		return
 	}
 
 	err = tests.CheckPassword(req.Password, account.Password)
 	if err != nil {
 		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusUnauthorized, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusUnauthorized, myerrors.ErrorResponse(err))
 		return
 	}
 
-	acessToken, acessPayload, err := t.token.CreateToken(account, t.cfg.Token.AcessDuration)
+	acessToken, acessPayload, err := t.token.CreateToken(account, t.cfg.AcessDuration)
 
 	if err != nil {
 		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, myerrors.ErrorResponse(err))
 		return
 	}
 
-	refreshToken, refreshPayload, err := t.token.CreateToken(account, t.cfg.Token.RefreshDuration)
+	refreshToken, refreshPayload, err := t.token.CreateToken(account, t.cfg.RefreshDuration)
 	if err != nil {
 		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, myerrors.ErrorResponse(err))
 		return
 	}
 
@@ -165,9 +171,8 @@ func (t *authHandler) Login(ctx *gin.Context) {
 		ClientIP:     ctx.ClientIP(),
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpiredAt,
-	}, t.cfg.Token.RefreshDuration); err != nil {
-		//TODO throw custom error: Passwords dont match
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+	}, t.cfg.RefreshDuration); err != nil {
+		ctx.JSON(http.StatusInternalServerError, myerrors.ErrorResponse(err))
 		return
 	}
 

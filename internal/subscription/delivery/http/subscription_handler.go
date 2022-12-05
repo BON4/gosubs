@@ -6,7 +6,8 @@ import (
 
 	"github.com/BON4/gosubs/config"
 	"github.com/BON4/gosubs/internal/domain"
-	herrors "github.com/BON4/gosubs/internal/errors"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	myerrors "github.com/BON4/gosubs/internal/errors"
 	"github.com/BON4/gosubs/internal/middleware"
 	tokengen "github.com/BON4/gosubs/pkg/tokenGen"
 	"github.com/gin-gonic/gin"
@@ -32,8 +33,8 @@ func NewSubscriptionHandler(g *gin.RouterGroup, suc domain.SubscriptionUsecase, 
 		logger: logger,
 	}
 
-	g.POST("", mid.RoleRestriction(domain.AccountRoleAdmin, domain.AccountRoleBot), handler.Create)
-	g.PATCH("", mid.RoleRestriction(domain.AccountRoleAdmin, domain.AccountRoleBot), handler.Update)
+	g.POST("", mid.RoleRestriction(models.AccountRoleAdmin, models.AccountRoleBot), handler.Create)
+	g.PATCH("", mid.RoleRestriction(models.AccountRoleAdmin, models.AccountRoleBot), handler.Update)
 	g.GET("/list", handler.List)
 }
 
@@ -49,25 +50,27 @@ func NewSubscriptionHandler(g *gin.RouterGroup, suc domain.SubscriptionUsecase, 
 // @Param        status_like       query     string           false "status name is like"
 // @Param        account_id        query     int              false "account id equal to"
 // @Param        user_id           query     int              false "user id equal to"
-// @Success      200     {array}   domain.Sub
+// @Success      200     {array}   models.Sub
+// @Failure      204     {object}  error
 // @Failure      400     {object}  error
+// @Failure      409     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /sub/list [get]
 func (t *subscriptionHandler) List(ctx *gin.Context) {
 	req, err := domain.ParseFindSubRequest(ctx.Request.URL.Query())
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, myerrors.ErrorResponse(err))
 		return
 	}
 
-	payload, err := tokengen.GetPayloadFromContext(ctx, t.cfg.Auth.PaylaodKey)
+	payload, err := tokengen.GetPayloadFromContext(ctx, t.cfg.PaylaodKey)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, myerrors.ErrorResponse(err))
 		return
 	}
 
-	if payload.Instance.Role == domain.AccountRoleCreator {
+	if payload.Instance.Role == models.AccountRoleCreator {
 		if req.AccountID != nil {
 			if req.AccountID.Eq != payload.Instance.AccountID {
 				ctx.Status(http.StatusMethodNotAllowed)
@@ -78,7 +81,8 @@ func (t *subscriptionHandler) List(ctx *gin.Context) {
 
 	subs, err := t.subsUc.List(ctx.Request.Context(), req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 
@@ -90,7 +94,7 @@ func (t *subscriptionHandler) List(ctx *gin.Context) {
 type updateSubscriptionRequest struct {
 	UserID    int64            `json:"user_id"`
 	AccountID int64            `json:"account_id"`
-	Status    domain.SubStatus `json:"status"`
+	Status    models.SubStatus `json:"status"`
 }
 
 // @Summary      Update
@@ -101,32 +105,34 @@ type updateSubscriptionRequest struct {
 // @Produce      json
 // @Param        input body   updateSubscriptionRequest  true  "subscription new status and price"
 // @Success      200
+// @Failure      204     {object}  error
 // @Failure      400     {object}  error
+// @Failure      409     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /sub [patch]
 func (t *subscriptionHandler) Update(ctx *gin.Context) {
 	req := updateSubscriptionRequest{}
 	if err := ctx.BindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, myerrors.ErrorResponse(err))
 		return
 	}
 
 	sub, err := t.subsUc.GetByID(ctx.Request.Context(), req.UserID, req.AccountID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 
 	sub.Status = req.Status
 
 	if err := t.subsUc.Update(ctx.Request.Context(), sub); err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 
 	if _, err := t.subsUc.Save(ctx.Request.Context(), sub); err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, myerrors.ErrorResponse(err))
 		return
 	}
 
@@ -138,7 +144,7 @@ type createSubscriptionRequest struct {
 	AccountID int64            `json:"account_id"`
 	ExpiresAt time.Time        `json:"expires_at"`
 	Price     int64            `json:"price"`
-	Status    domain.SubStatus `json:"status"`
+	Status    models.SubStatus `json:"status"`
 }
 
 // @Summary      Create
@@ -149,7 +155,9 @@ type createSubscriptionRequest struct {
 // @Produce      json
 // @Param        input body   createSubscriptionRequest  true  "subscription info"
 // @Success      200
+// @Failure      204     {object}  error
 // @Failure      400     {object}  error
+// @Failure      409     {object}  error
 // @Failure      401     {object}  error
 // @Failure      500     {object}  error
 // @Router       /sub [post]
@@ -157,17 +165,17 @@ func (t *subscriptionHandler) Create(ctx *gin.Context) {
 
 	req := createSubscriptionRequest{}
 	if err := ctx.BindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, herrors.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, myerrors.ErrorResponse(err))
 		return
 	}
 
 	user, err := t.userUc.GetByID(ctx.Request.Context(), req.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 
-	sub := &domain.Sub{
+	sub := &models.Sub{
 		UserID:      user.UserID,
 		AccountID:   req.AccountID,
 		ActivatedAt: time.Now(),
@@ -177,12 +185,12 @@ func (t *subscriptionHandler) Create(ctx *gin.Context) {
 	}
 
 	if err := t.subsUc.Create(ctx.Request.Context(), sub); err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 
 	if _, err := t.subsUc.Save(ctx.Request.Context(), sub); err != nil {
-		ctx.JSON(http.StatusInternalServerError, herrors.ErrorResponse(err))
+		ctx.JSON(myerrors.GetErrorCode(err), myerrors.ErrorResponse(err))
 		return
 	}
 

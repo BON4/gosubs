@@ -4,163 +4,167 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	domain "github.com/BON4/gosubs/internal/domain"
-	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
-
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	myerrors "github.com/BON4/gosubs/internal/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+var (
+	ErrNoAccounts = errors.New("No accounts has been found")
+)
+
 type accUsecaseBoil struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *logrus.Entry
 }
 
-func NewBoilAccountUsecase(db *sql.DB) domain.AccountUsecase {
+func NewBoilAccountUsecase(db *sql.DB, logger *logrus.Entry) domain.AccountUsecase {
 	return &accUsecaseBoil{
-		db: db,
+		logger: logger,
+		db:     db,
 	}
 }
 
-func (c *accUsecaseBoil) GetByEmail(ctx context.Context, email string) (*domain.Account, error) {
-	acc := &boilmodels.Account{}
-	err := boilmodels.Accounts(qm.Where("email=?", email), qm.Limit(1)).Bind(ctx, c.db, acc)
+func (c *accUsecaseBoil) GetByEmail(ctx context.Context, email string) (*models.Account, error) {
+	acc := &models.Account{}
+	err := models.Accounts(qm.Where("email=?", email), qm.Limit(1)).Bind(ctx, c.db, acc)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Account with email: %s, does not exists. Detail: %w", email, err)
+		}
+		return nil, err
+	}
+
+	return acc, nil
+}
+
+func (c *accUsecaseBoil) GetUser(ctx context.Context, id int64) (*models.Tguser, error) {
+	acc, err := models.FindAccount(ctx, c.db, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Account with user_id: %d, does not exists. Detail: %w", id, err)
+		}
+		return nil, err
+	}
+
+	user, err := models.FindTguser(ctx, c.db, acc.UserID.Int64)
 	if err != nil {
 		return nil, err
 	}
 
-	domainAcc := &domain.Account{}
-	domain.AccountBoilToDomain(acc, domainAcc)
-	return domainAcc, nil
+	return user, err
 }
 
-func (c *accUsecaseBoil) GetUser(ctx context.Context, id int64) (*domain.Tguser, error) {
-	acc, err := boilmodels.FindAccount(ctx, c.db, id)
+func (c *accUsecaseBoil) GetByID(ctx context.Context, id int64) (*models.Account, error) {
+	acc, err := models.FindAccount(ctx, c.db, id)
 	if err != nil {
-		// if err == sql.ErrNoRows {
-		// 	return nil, errors.New("acc does not exist")
-		// }
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Account with id: %d, does not exists. Detail: %w", id, err)
+		}
 		return nil, err
 	}
-
-	user, err := boilmodels.FindTguser(ctx, c.db, acc.UserID.Int64)
-	if err != nil {
-		return nil, err
-	}
-
-	domainUser := &domain.Tguser{}
-	domain.TguserBoilToDomain(user, domainUser)
-
-	return domainUser, err
+	return acc, nil
 }
 
-func (c *accUsecaseBoil) GetByID(ctx context.Context, id int64) (*domain.Account, error) {
-	acc, err := boilmodels.FindAccount(ctx, c.db, id)
-	if err != nil {
-		// if err == sql.ErrNoRows {
-		// 	return nil, errors.New("acc does not exist")
-		// }
+func (c *accUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*models.Account, error) {
+	acc := &models.Account{}
+	if err := models.Accounts(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, c.db, acc); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Account with telegram_id: %d, does not exists. Detail: %w", id, err)
+		}
 		return nil, err
 	}
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(acc, domainAccount)
-	return domainAccount, nil
+	return acc, nil
 }
 
-func (c *accUsecaseBoil) GetByTelegramID(ctx context.Context, id int64) (*domain.Account, error) {
-	acc := &boilmodels.Account{}
-	if err := boilmodels.Accounts(qm.Where("telegram_di=?", id), qm.Limit(1)).Bind(ctx, c.db, acc); err != nil {
-		// if err == sql.ErrNoRows {
-		// 	return nil, errors.New("acc does not exist")
-		// }
-		return nil, err
-	}
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(acc, domainAccount)
-	return domainAccount, nil
-}
-
-func (c *accUsecaseBoil) Create(ctx context.Context, acc *domain.Account) error {
+func (c *accUsecaseBoil) Create(ctx context.Context, acc *models.Account) error {
 	if acc.UserID.Valid {
-		if _, err := boilmodels.Accounts(qm.Where("user_id=?", acc.UserID)).One(ctx, c.db); err != nil {
+		_, err := models.Accounts(qm.Where("user_id=?", acc.UserID)).One(ctx, c.db)
+
+		//Have an error
+		if err != nil {
 			if err != sql.ErrNoRows {
+				//Essantial error then return
 				return err
 			}
+
 		} else {
-			//TODO create custom errors
-			return errors.New("account with this user_id already exist")
+			//Have no error means DB already have this object, we dont want this
+			return fmt.Errorf("Account with user_id: %d, already exists. Detail: %w", acc.UserID.Int64, myerrors.ErrAlreadyExists)
 		}
 	}
 
-	boilAccount := &boilmodels.Account{}
-	domain.AccountDomainToBoil(acc, boilAccount)
-
 	// Insert
-	if err := boilAccount.Insert(ctx, c.db, boil.Infer()); err != nil {
+	if err := acc.Insert(ctx, c.db, boil.Infer()); err != nil {
 		return err
 	}
 
-	domain.AccountBoilToDomain(boilAccount, acc)
-
 	return nil
+
 }
 
 // Delete - will delete acc. Subscriptions will be deleted also.
 func (c *accUsecaseBoil) Delete(ctx context.Context, id int64) error {
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := c.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+		ReadOnly:  false,
+	})
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				c.logger.Error("Rollback failed:", err)
+			}
+		}
+	}()
+
 	//Delete user subscription
-	if _, err := boilmodels.Subs(qm.Where("account_id=?", id)).DeleteAll(ctx, tx); err != nil {
-		//TODO Rollback can cause error
-		tx.Rollback()
+	_, err = models.Subs(qm.Where("account_id=?", id)).DeleteAll(ctx, tx)
+	if err != nil {
 		return err
 	}
 
 	// Delete Account
-	if _, err := boilmodels.Accounts(qm.Where("account_id=?", id)).DeleteAll(ctx, tx); err != nil {
-		//TODO Rollback can cause error
-		tx.Rollback()
-		return err
-	}
-
-	//TODO Commit can cause error
-	if err := tx.Commit(); err != nil {
+	_, err = models.Accounts(qm.Where("account_id=?", id)).DeleteAll(ctx, tx)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *accUsecaseBoil) Update(ctx context.Context, acc *domain.Account) error {
-	foundAccount, err := boilmodels.FindAccount(ctx, c.db, acc.AccountID)
+func (c *accUsecaseBoil) Update(ctx context.Context, acc *models.Account) error {
+	foundAccount, err := models.FindAccount(ctx, c.db, acc.AccountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return errors.New("acc does not exist")
+			return fmt.Errorf("Account with id: %d, does not exists. Detail: %w", acc.AccountID, err)
 		}
 		return err
 	}
 
-	boilAccount := &boilmodels.Account{}
-	domain.AccountDomainToBoil(acc, boilAccount)
-
-	foundAccount.Password = boilAccount.Password
-	foundAccount.Email = boilAccount.Email
-	foundAccount.ChanName = boilAccount.ChanName
-	foundAccount.AccountID = boilAccount.AccountID
-	foundAccount.UserID = boilAccount.UserID
-	foundAccount.Role = boilAccount.Role
+	foundAccount.Password = acc.Password
+	foundAccount.Email = acc.Email
+	foundAccount.ChanName = acc.ChanName
+	foundAccount.AccountID = acc.AccountID
+	foundAccount.UserID = acc.UserID
+	foundAccount.Role = acc.Role
 
 	_, err = foundAccount.Update(ctx, c.db, boil.Infer())
-
-	domain.AccountBoilToDomain(boilAccount, acc)
-
 	return err
 }
 
-func (c *accUsecaseBoil) List(ctx context.Context, cond domain.FindAccountRequest) ([]*domain.Account, error) {
+func (c *accUsecaseBoil) List(ctx context.Context, cond domain.FindAccountRequest) ([]*models.Account, error) {
 	var conds []qm.QueryMod = make([]qm.QueryMod, 0, 1)
 
 	if cond.Role != nil {
@@ -173,17 +177,10 @@ func (c *accUsecaseBoil) List(ctx context.Context, cond domain.FindAccountReques
 
 	conds = append(conds, qm.Offset(int(cond.PageSettings.PageNumber)), qm.Limit(int(cond.PageSettings.PageSize)))
 
-	baccs, err := boilmodels.Accounts(conds...).All(ctx, c.db)
+	baccs, err := models.Accounts(conds...).All(ctx, c.db)
 	if err != nil {
-		return make([]*domain.Account, 0), err
+		return make([]*models.Account, 0), err
 	}
 
-	domainAccounts := make([]*domain.Account, len(baccs))
-
-	for i, acc := range baccs {
-		domainAccounts[i] = &domain.Account{}
-		domain.AccountBoilToDomain(acc, domainAccounts[i])
-	}
-
-	return domainAccounts, nil
+	return baccs, nil
 }

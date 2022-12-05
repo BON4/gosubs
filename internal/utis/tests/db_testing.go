@@ -13,6 +13,7 @@ import (
 )
 
 func ConnectTestDB() (*sql.DB, error) {
+	// TODO get test DB from ENV
 	db, err := sql.Open("postgres", "postgresql://root:secret@localhost:5432/tgram_subs_test?sslmode=disable")
 	if err != nil {
 		return nil, err

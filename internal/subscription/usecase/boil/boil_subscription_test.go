@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/BON4/gosubs/internal/domain"
-	boilmodels "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	domain "github.com/BON4/gosubs/internal/domain"
+	models "github.com/BON4/gosubs/internal/domain/boil_postgres"
+	"github.com/sirupsen/logrus"
 
 	account_usecase "github.com/BON4/gosubs/internal/account/usecase/boil"
 	sub_usecase "github.com/BON4/gosubs/internal/subscription/usecase/boil"
@@ -19,6 +20,7 @@ import (
 )
 
 var db *sql.DB
+var logger = logrus.New()
 
 func TestMain(m *testing.M) {
 	var err error
@@ -51,16 +53,13 @@ func TestSubCreate(t *testing.T) {
 
 	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
-	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
+	subUc := sub_usecase.NewBoilSubscriptionUsecase(db, logger.WithContext(ctx))
 
-	domainSub := &domain.Sub{}
-	domain.SubBoilToDomain(sub, domainSub)
-
-	if err := subUc.Create(ctx, domainSub); err != nil {
+	if err := subUc.Create(ctx, sub); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.AccountID)
+	_, err := models.FindSub(ctx, db, sub.UserID, sub.AccountID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,12 +84,9 @@ func TestSubDelete(t *testing.T) {
 
 	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
-	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
+	subUc := sub_usecase.NewBoilSubscriptionUsecase(db, logger.WithContext(ctx))
 
-	domainSub := &domain.Sub{}
-	domain.SubBoilToDomain(sub, domainSub)
-
-	if err := subUc.Create(ctx, domainSub); err != nil {
+	if err := subUc.Create(ctx, sub); err != nil {
 		t.Fatal(err)
 	}
 
@@ -98,7 +94,7 @@ func TestSubDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.AccountID)
+	_, err := models.FindSub(ctx, db, sub.UserID, sub.AccountID)
 	if err != sql.ErrNoRows {
 		t.Fatal(err)
 	}
@@ -124,27 +120,22 @@ func TestSubUpdate(t *testing.T) {
 
 	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
-	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
+	subUc := sub_usecase.NewBoilSubscriptionUsecase(db, logger.WithContext(ctx))
 
-	domainSub := &domain.Sub{}
-	domain.SubBoilToDomain(sub, domainSub)
-
-	if err := subUc.Create(ctx, domainSub); err != nil {
+	if err := subUc.Create(ctx, sub); err != nil {
 		t.Fatal(err)
 	}
 
 	sub.ActivatedAt = time.Now()
 	sub.ExpiresAt = time.Now().Add(time.Hour)
 	sub.Price = null.IntFrom(0)
-	sub.Status = boilmodels.SubStatusCancelled
+	sub.Status = models.SubStatusCancelled
 
-	domain.SubBoilToDomain(sub, domainSub)
-
-	if err := subUc.Update(ctx, domainSub); err != nil {
+	if err := subUc.Update(ctx, sub); err != nil {
 		t.Fatal(err)
 	}
 
-	found, err := boilmodels.FindSub(ctx, db, sub.UserID, sub.AccountID)
+	found, err := models.FindSub(ctx, db, sub.UserID, sub.AccountID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,23 +168,18 @@ func TestSubSave(t *testing.T) {
 
 	sub := tests.RandomSubBoil(usr.UserID, crt.AccountID)
 
-	subUc := sub_usecase.NewBoilSubscriptionUsecase(db)
+	subUc := sub_usecase.NewBoilSubscriptionUsecase(db, logger.WithContext(ctx))
 
-	domainSub := &domain.Sub{}
-	domain.SubBoilToDomain(sub, domainSub)
-
-	if err := subUc.Create(ctx, domainSub); err != nil {
+	if err := subUc.Create(ctx, sub); err != nil {
 		t.Fatal(err)
 	}
 
-	domain.SubBoilToDomain(sub, domainSub)
-
-	id, err := subUc.Save(ctx, domainSub)
+	id, err := subUc.Save(ctx, sub)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hist, err := boilmodels.FindSubHistory(ctx, db, id)
+	hist, err := models.FindSubHistory(ctx, db, id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,18 +200,17 @@ func BenchmarkSubList(b *testing.B) {
 
 	ctx := context.TODO()
 
-	uuc := tguser_usecase.NewBoilTgUserUsecase(db)
-	cuc := account_usecase.NewBoilAccountUsecase(db)
-	suc := sub_usecase.NewBoilSubscriptionUsecase(db)
+	uuc := tguser_usecase.NewBoilTgUserUsecase(db, logger.WithContext(ctx))
+	cuc := account_usecase.NewBoilAccountUsecase(db, logger.WithContext(ctx))
+	suc := sub_usecase.NewBoilSubscriptionUsecase(db, logger.WithContext(ctx))
 
 	total := b.N
 
-	users := make([]*domain.Tguser, total)
+	users := make([]*models.Tguser, total)
 
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(tests.RrandomAccountBoil(null.NewInt64(0, false)), domainAccount)
+	domainAccount := &models.Account{}
 
-	subs := make([]*domain.Sub, total)
+	subs := make([]*models.Sub, total)
 
 	b.StartTimer()
 
@@ -234,17 +219,20 @@ func BenchmarkSubList(b *testing.B) {
 	}
 
 	for i := 0; i < total; i++ {
-		users[i] = &domain.Tguser{}
-		domain.TguserBoilToDomain(tests.RandomUserBoil(), users[i])
-
+		users[i] = &models.Tguser{Status: models.UserStatusMember}
 		if err := uuc.Create(ctx, users[i]); err != nil {
-			panic(err)
+			b.Fatal(err)
+			return
 		}
-		subs[i] = &domain.Sub{}
-		domain.SubBoilToDomain(tests.RandomSubBoil(users[i].UserID, domainAccount.AccountID), subs[i])
 
+		subs[i] = &models.Sub{
+			Status:    models.SubStatusActive,
+			AccountID: domainAccount.AccountID,
+			UserID:    users[i].UserID,
+		}
 		if err := suc.Create(ctx, subs[i]); err != nil {
-			panic(err)
+			b.Fatal(err)
+			return
 		}
 	}
 
@@ -268,7 +256,9 @@ func BenchmarkSubList(b *testing.B) {
 		},
 	})
 	if err != nil {
-		panic(err)
+		b.Fatal(err)
+		return
+
 	}
 
 	b.StopTimer()
@@ -282,37 +272,38 @@ func BenchmarkUpdate(b *testing.B) {
 
 	ctx := context.TODO()
 
-	uuc := tguser_usecase.NewBoilTgUserUsecase(db)
-	cuc := account_usecase.NewBoilAccountUsecase(db)
-	suc := sub_usecase.NewBoilSubscriptionUsecase(db)
+	uuc := tguser_usecase.NewBoilTgUserUsecase(db, logger.WithContext(ctx))
+	cuc := account_usecase.NewBoilAccountUsecase(db, logger.WithContext(ctx))
+	suc := sub_usecase.NewBoilSubscriptionUsecase(db, logger.WithContext(ctx))
 
 	total := b.N
 
-	users := make([]*domain.Tguser, total)
+	users := make([]*models.Tguser, total)
 
-	domainAccount := &domain.Account{}
-	domain.AccountBoilToDomain(tests.RrandomAccountBoil(null.NewInt64(0, false)), domainAccount)
-
-	subs := make([]*domain.Sub, total)
+	domainAccount := tests.RrandomAccountBoil(null.NewInt64(0, false))
+	subs := make([]*models.Sub, total)
 
 	b.StartTimer()
 
 	if err := cuc.Create(ctx, domainAccount); err != nil {
-		panic(err)
+		b.Fatal(err)
+		return
+
 	}
 
 	for i := 0; i < total; i++ {
-		users[i] = &domain.Tguser{}
-		domain.TguserBoilToDomain(tests.RandomUserBoil(), users[i])
-
+		users[i] = tests.RandomUserBoil()
 		if err := uuc.Create(ctx, users[i]); err != nil {
-			panic(err)
-		}
-		subs[i] = &domain.Sub{}
-		domain.SubBoilToDomain(tests.RandomSubBoil(users[i].UserID, domainAccount.AccountID), subs[i])
+			b.Fatal(err)
+			return
 
+		}
+
+		subs[i] = tests.RandomSubBoil(users[i].UserID, domainAccount.AccountID)
 		if err := suc.Create(ctx, subs[i]); err != nil {
-			panic(err)
+			b.Fatal(err)
+			return
+
 		}
 	}
 
@@ -320,7 +311,7 @@ func BenchmarkUpdate(b *testing.B) {
 		temp := tests.RandomSubBoil(sub.UserID, sub.AccountID)
 		sub.ActivatedAt = temp.ActivatedAt
 		sub.ExpiresAt = temp.ExpiresAt
-		sub.Status = domain.SubStatus(temp.Status)
+		sub.Status = models.SubStatus(temp.Status)
 		sub.Price = temp.Price
 		if err := suc.Update(ctx, sub); err != nil {
 			b.Fatal(err)
